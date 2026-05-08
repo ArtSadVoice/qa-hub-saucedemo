@@ -1,0 +1,965 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QA Hub Demo &mdash; saucedemo.com (Vue 3)</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Sarabun:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --c-bg:        #fbfaf7;
+      --c-bg-alt:    #f5f4f0;
+      --c-text:      #1c1917;
+      --c-muted:     #78716c;
+      --c-border:    #e7e5e4;
+      --c-card:      #ffffff;
+      --c-vue:       #42b883;
+      --c-vue-dark:  #35495e;
+      --c-vue-soft:  rgba(66, 184, 131, 0.10);
+      --c-warn:      #d97706;
+      --c-danger:    #dc2626;
+      --c-mono: "JetBrains Mono", "Consolas", monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--c-bg);
+      color: var(--c-text);
+      font-family: "Inter", "Sarabun", system-ui, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    code {
+      font-family: var(--c-mono);
+      background: var(--c-vue-soft);
+      color: var(--c-vue-dark);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+
+    /* ===== shell ===== */
+    .deck {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+    }
+    .deck-frame {
+      width: min(1280px, 100%);
+      height: min(800px, calc(100vh - 90px));
+      background: var(--c-card);
+      border-radius: 22px;
+      border: 1px solid var(--c-border);
+      box-shadow: 0 30px 80px rgba(28, 25, 23, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* progress bar */
+    .progress {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--c-vue) 0%, var(--c-vue-dark) 100%);
+      transition: width 0.3s ease;
+      z-index: 10;
+    }
+
+    /* meta header */
+    .meta {
+      position: absolute;
+      top: 16px;
+      left: 22px;
+      right: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--c-mono);
+      font-size: 11px;
+      color: var(--c-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      z-index: 5;
+    }
+    .meta .vue-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--c-vue);
+      font-weight: 600;
+    }
+    .meta .vue-badge svg { width: 14px; height: 14px; }
+
+    /* slide stage */
+    .stage {
+      position: absolute;
+      top: 48px;
+      bottom: 56px;
+      left: 0;
+      right: 0;
+      padding: 28px 60px;
+      overflow: hidden;
+    }
+    .slide {
+      position: absolute;
+      inset: 28px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* transitions */
+    .slide-enter-active, .slide-leave-active {
+      transition: opacity 0.32s ease, transform 0.32s ease;
+    }
+    .slide-enter-from { opacity: 0; transform: translateX(40px); }
+    .slide-leave-to   { opacity: 0; transform: translateX(-40px); }
+
+    /* ===== controls bar ===== */
+    .controls {
+      position: absolute;
+      bottom: 16px;
+      left: 22px;
+      right: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 5;
+    }
+    .pager {
+      font-family: var(--c-mono);
+      font-size: 12px;
+      color: var(--c-muted);
+    }
+    .pager .current { color: var(--c-vue); font-weight: 700; }
+    .nav-btns { display: flex; gap: 8px; }
+    .nav-btn {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--c-border);
+      background: var(--c-card);
+      color: var(--c-muted);
+      cursor: pointer;
+      font-size: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover {
+      border-color: var(--c-vue);
+      color: var(--c-vue);
+      transform: translateY(-1px);
+    }
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .nav-btn.icon-overview { font-size: 12px; font-family: var(--c-mono); font-weight: 700; }
+
+    /* ===== typography ===== */
+    h1, h2, h3, h4 {
+      margin: 0;
+      letter-spacing: -0.02em;
+      font-weight: 700;
+    }
+    h1 { font-size: 60px; line-height: 1.05; }
+    h2 { font-size: 40px; margin-bottom: 8px; }
+    h3 { font-size: 22px; color: var(--c-vue); margin-bottom: 8px; }
+    h4 { font-size: 16px; color: var(--c-vue-dark); }
+
+    p { margin: 0; line-height: 1.55; }
+    .small  { font-size: 14px; }
+    .tiny   { font-size: 11px; }
+    .muted  { color: var(--c-muted); }
+    .vue    { color: var(--c-vue); }
+    .center { text-align: center; }
+
+    /* ===== components ===== */
+    .hero {
+      padding: 40px 36px;
+      border-radius: 18px;
+      background:
+        radial-gradient(800px 200px at 50% -20%, var(--c-vue-soft), transparent 70%),
+        linear-gradient(180deg, #ffffff 0%, var(--c-bg-alt) 100%);
+      border: 1px solid var(--c-border);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--c-vue-soft);
+      color: var(--c-vue);
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid rgba(66, 184, 131, 0.2);
+    }
+    .badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--c-vue);
+      box-shadow: 0 0 8px var(--c-vue);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .grid { display: grid; gap: 14px; }
+    .grid.g-2 { grid-template-columns: 1fr 1fr; }
+    .grid.g-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .card {
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      transition: all 0.2s;
+    }
+    .card:hover {
+      border-color: var(--c-vue);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(66, 184, 131, 0.10);
+    }
+    .card h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      margin-bottom: 6px;
+      color: var(--c-vue-dark);
+    }
+    .card h4 .num {
+      font-family: var(--c-mono);
+      font-size: 10px;
+      color: var(--c-vue);
+      background: var(--c-vue-soft);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .card p, .card ul { margin: 0; font-size: 13px; line-height: 1.5; }
+    .card ul { padding-left: 1.1em; }
+
+    .stat {
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-radius: 14px;
+      padding: 22px 16px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: var(--c-vue);
+    }
+    .stat .num {
+      font-family: var(--c-mono);
+      font-size: 44px;
+      font-weight: 700;
+      color: var(--c-vue);
+      line-height: 1;
+    }
+    .stat .lbl {
+      color: var(--c-muted);
+      font-size: 11px;
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      margin: 2px 3px;
+      background: var(--c-vue-soft);
+      color: var(--c-vue);
+      border: 1px solid rgba(66, 184, 131, 0.25);
+      font-family: var(--c-mono);
+    }
+    .chip.green { background: #dcfce7; color: #16a34a; border-color: #bbf7d0; }
+    .chip.amber { background: #fef3c7; color: var(--c-warn); border-color: #fde68a; }
+    .chip.red   { background: #fee2e2; color: var(--c-danger); border-color: #fecaca; }
+    .chip.gray  { background: #f5f5f4; color: var(--c-muted); border-color: var(--c-border); }
+
+    /* screenshot hero */
+    .shot {
+      max-width: 100%;
+      max-height: 56vh;
+      width: auto;
+      border-radius: 12px;
+      border: 1px solid var(--c-border);
+      box-shadow: 0 10px 40px rgba(28, 25, 23, 0.10);
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* code block */
+    pre.code {
+      margin: 0;
+      background: var(--c-vue-dark);
+      color: #f8f8f2;
+      font-family: var(--c-mono);
+      font-size: 13px;
+      line-height: 1.55;
+      padding: 18px 20px;
+      border-radius: 12px;
+      overflow: auto;
+      max-height: 60vh;
+      border: 1px solid var(--c-border);
+    }
+    pre.code .kw  { color: #ff79c6; }
+    pre.code .str { color: #f1fa8c; }
+    pre.code .cm  { color: #6272a4; font-style: italic; }
+    pre.code .fn  { color: #50fa7b; }
+
+    /* ascii diagram */
+    .ascii-diagram {
+      font-family: var(--c-mono);
+      font-size: 12px;
+      background: var(--c-vue-dark);
+      color: #cbd5e1;
+      padding: 18px 22px;
+      border-radius: 12px;
+      line-height: 1.4;
+      white-space: pre;
+      overflow: auto;
+      border: 1px solid var(--c-border);
+    }
+    .ascii-diagram .hi { color: var(--c-vue); font-weight: 700; }
+
+    .term-line {
+      font-family: var(--c-mono);
+      font-size: 14px;
+      color: var(--c-muted);
+    }
+    .term-line .prompt { color: var(--c-vue); }
+    .term-line .flag   { color: var(--c-warn); }
+    .term-line .cmd    { color: var(--c-text); }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--c-border), transparent);
+      margin: 14px 0;
+    }
+
+    /* ===== overview mode ===== */
+    .overview-grid {
+      position: absolute;
+      inset: 0;
+      background: var(--c-bg);
+      padding: 56px 40px 40px 40px;
+      overflow: auto;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      align-content: start;
+    }
+    .overview-tile {
+      aspect-ratio: 16 / 10;
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-radius: 10px;
+      cursor: pointer;
+      padding: 14px;
+      font-size: 11px;
+      color: var(--c-muted);
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+    }
+    .overview-tile:hover {
+      border-color: var(--c-vue);
+      transform: translateY(-2px);
+    }
+    .overview-tile.active {
+      border-color: var(--c-vue);
+      box-shadow: 0 0 0 2px var(--c-vue-soft);
+    }
+    .overview-tile .ot-num {
+      font-family: var(--c-mono);
+      font-size: 10px;
+      color: var(--c-vue);
+      font-weight: 700;
+    }
+    .overview-tile .ot-title {
+      color: var(--c-text);
+      font-weight: 600;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+    .overview-header {
+      position: absolute;
+      top: 16px;
+      left: 40px;
+      right: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--c-muted);
+      font-size: 12px;
+      font-family: var(--c-mono);
+    }
+
+    /* responsive scale-down */
+    @media (max-height: 850px) {
+      h1 { font-size: 48px; }
+      h2 { font-size: 32px; }
+    }
+
+    [v-cloak] { display: none; }
+  </style>
+</head>
+<body>
+
+<div id="app" v-cloak>
+  <div class="deck">
+    <div class="deck-frame">
+
+      <div class="progress" :style="{ width: progress + '%' }"></div>
+
+      <header class="meta">
+        <div>QA Hub <span style="color:var(--c-vue)">/</span> saucedemo</div>
+        <div class="vue-badge">
+          <svg viewBox="0 0 256 221" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#42B883" d="M204.8 0H256L128 220.8L0 0h97.92L128 51.2L157.44 0H204.8z"/>
+            <path fill="#35495E" d="M0 0l128 220.8L256 0h-51.2L128 132.48L50.56 0H0z"/>
+            <path fill="#42B883" d="M50.56 0L128 133.12L204.8 0h-47.36L128 51.2L97.92 0H50.56z"/>
+          </svg>
+          Built with Vue 3
+        </div>
+      </header>
+
+      <!-- ===== STAGE ===== -->
+      <main class="stage">
+        <transition name="slide" mode="out-in">
+          <section class="slide" :key="currentIndex">
+
+            <!-- 1. Title -->
+            <template v-if="currentIndex === 0">
+              <div class="hero center">
+                <span class="badge"><span class="dot"></span> Portfolio &middot; QA Engineer</span>
+                <h1 style="margin: 18px 0 8px 0;">QA Hub <span class="vue">/</span> saucedemo</h1>
+                <p class="muted" style="font-size: 18px;">
+                  End-to-end test orchestration &mdash; this deck built with <span class="vue">Vue 3</span>
+                </p>
+                <div class="divider"></div>
+                <div>
+                  <span class="chip">Playwright TS</span>
+                  <span class="chip">Flask &middot; Vue 3</span>
+                  <span class="chip">JSON-state</span>
+                  <span class="chip">GitHub Actions</span>
+                  <span class="chip green">17 tests / 17 s</span>
+                </div>
+                <p class="tiny muted" style="margin-top: 22px; font-family: var(--c-mono); letter-spacing: 0.1em;">
+                  github.com/ArtSadVoice/qa-hub-saucedemo
+                </p>
+              </div>
+            </template>
+
+            <!-- 2. Why this exists -->
+            <template v-else-if="currentIndex === 1">
+              <h2>Why this exists</h2>
+              <p class="muted small" style="margin-bottom: 14px;">
+                Small QA team &middot; Playwright/pytest tools &middot; แต่ไม่มี <span class="vue">single source of truth</span>
+              </p>
+              <div class="grid g-2">
+                <div class="card" v-for="card in problemCards" :key="card.t">
+                  <h4><span class="num">{{ card.n }}</span> {{ card.t }}</h4>
+                  <ul><li v-for="b in card.bullets" :key="b">{{ b }}</li></ul>
+                </div>
+              </div>
+            </template>
+
+            <!-- 3. The stack -->
+            <template v-else-if="currentIndex === 2">
+              <h2>The stack</h2>
+              <div class="grid g-3" style="margin-top: 10px;">
+                <div class="card" v-for="s in stackCards" :key="s.t">
+                  <h4><span class="num">{{ s.n }}</span> {{ s.t }}</h4>
+                  <p class="small" v-html="s.body"></p>
+                </div>
+              </div>
+            </template>
+
+            <!-- 4. Architecture -->
+            <template v-else-if="currentIndex === 3">
+              <h2>Architecture</h2>
+              <p class="muted small" style="margin-bottom: 12px;">
+                Browser <span class="vue">&rarr;</span> Flask <span class="vue">&rarr;</span> JSON state <span class="vue">&rarr;</span> spawn Playwright
+              </p>
+              <pre class="ascii-diagram"><span class="hi">Browser</span> (localhost:8080)
++-----------------------------+    +-----------------------------+
+| Legacy dashboard ( / )      |    | Vue v2 dashboard ( /v2/ )   |
++--------------+--------------+    +--------------+--------------+
+               |                                  |
+               +------- fetch /api/* -------------+
+                               |
++------------------------------V------------------------------+
+|                  <span class="hi">Flask app</span> (hub/app.py)                     |
+|  /api/projects   /api/run/log     /api/release-gate         |
+|  /api/run/tests (SSE)   /api/bugs/*   /api/schedules/*      |
++-------+-----------------+--------------+--------------------+
+        |                 |              |
+  release_gate.py   scheduler thread   validators
+                               |
++------------------------------V-------------------------------+
+|                       <span class="hi">State (JSON)</span>                           |
+|   config.json   run_history.json   schedules.json   bugs/*   |
++------------------------------+-------------------------------+
+                               |  spawn / read
++------------------------------V-------------------------------+
+|   projects/saucedemo/ &mdash; <span class="hi">npx playwright test</span> --grep @smoke |
+|   stdout streamed via SSE &rarr; appended to run_history.json   |
++--------------------------------------------------------------+</pre>
+            </template>
+
+            <!-- 5. SUT -->
+            <template v-else-if="currentIndex === 4">
+              <h2>System under test</h2>
+              <p class="muted small" style="margin-bottom: 10px;">
+                Live site &middot; 6 built-in test users &middot; no mocks
+              </p>
+              <div class="center"><img src="screenshots/07-saucedemo-home.png" alt="saucedemo login" class="shot" /></div>
+            </template>
+
+            <!-- 6. 6 users = 6 scenarios -->
+            <template v-else-if="currentIndex === 5">
+              <h2>6 users <span class="muted">=</span> 6 scenarios</h2>
+              <p class="muted small" style="margin-bottom: 10px;">
+                Saucedemo's built-in personas <span class="vue">are</span> the test plan
+              </p>
+              <div class="grid g-2">
+                <div class="card" v-for="u in testUsers" :key="u.name">
+                  <h4><span :class="['chip', u.tone]">{{ u.tag }}</span> {{ u.name }}</h4>
+                  <p class="small">{{ u.desc }}</p>
+                </div>
+              </div>
+            </template>
+
+            <!-- 7. Code snippet -->
+            <template v-else-if="currentIndex === 6">
+              <h2>Tests read like requirements</h2>
+              <p class="muted small" style="margin-bottom: 10px;">
+                <code>TEST_USERS</code> const &middot; spec ไม่มี string magic
+              </p>
+              <pre class="code"><span class="cm">// tests/pages/LoginPage.ts</span>
+<span class="kw">export const</span> <span class="fn">TEST_USERS</span> = {
+  standard:    { username: <span class="str">"standard_user"</span>,            password: <span class="str">"secret_sauce"</span> },
+  locked:      { username: <span class="str">"locked_out_user"</span>,          password: <span class="str">"secret_sauce"</span> },
+  problem:     { username: <span class="str">"problem_user"</span>,             password: <span class="str">"secret_sauce"</span> },
+  performance: { username: <span class="str">"performance_glitch_user"</span>,  password: <span class="str">"secret_sauce"</span> },
+} <span class="kw">as const</span>;
+
+<span class="cm">// tests/e2e/TS_01_login.spec.ts</span>
+test(<span class="str">"standard user logs in @smoke"</span>, <span class="kw">async</span> ({ page }) =&gt; {
+  <span class="kw">const</span> login = <span class="kw">new</span> <span class="fn">LoginPage</span>(page);
+  <span class="kw">await</span> login.<span class="fn">goto</span>();
+  <span class="kw">await</span> login.<span class="fn">loginAs</span>(<span class="str">"standard"</span>);
+  <span class="kw">await</span> <span class="fn">expect</span>(page).<span class="fn">toHaveURL</span>(/inventory.html/);
+});</pre>
+            </template>
+
+            <!-- 8. 17 tests / 17 s -->
+            <template v-else-if="currentIndex === 7">
+              <h2>17 tests <span class="muted">·</span> 17 seconds</h2>
+              <div class="grid g-3" style="margin-top: 12px;">
+                <div class="stat"><div class="num">4</div><div class="lbl">@smoke</div></div>
+                <div class="stat"><div class="num">2</div><div class="lbl">@e2e</div></div>
+                <div class="stat"><div class="num">10</div><div class="lbl">@regression</div></div>
+              </div>
+              <div class="grid g-2" style="margin-top: 14px;">
+                <div class="stat"><div class="num">1</div><div class="lbl">@visual</div></div>
+                <div class="stat"><div class="num">100<span style="font-size: 22px;">%</span></div><div class="lbl">pass rate</div></div>
+              </div>
+              <p class="term-line center" style="margin-top: 22px;">
+                <span class="prompt">$</span> <span class="cmd">npx playwright test</span> <span class="flag">--grep</span> @smoke<br />
+                <span class="muted">&nbsp;&nbsp;&rarr;&nbsp;</span><span class="cmd">17 passed</span> <span class="muted">in</span> 17.1s
+              </p>
+            </template>
+
+            <!-- 9. Inventory shot -->
+            <template v-else-if="currentIndex === 8">
+              <h2>What the bot sees</h2>
+              <p class="muted small" style="margin-bottom: 10px;">
+                After <code>loginAs("standard")</code> &mdash; 6 products &middot; sort &middot; cart &middot; checkout
+              </p>
+              <div class="center"><img src="screenshots/08-saucedemo-inventory.png" alt="saucedemo inventory" class="shot" /></div>
+            </template>
+
+            <!-- 10. Hub dashboard -->
+            <template v-else-if="currentIndex === 9">
+              <h2>Hub dashboard</h2>
+              <p class="muted small" style="margin-bottom: 10px;">
+                Trend chart + stats + run history &mdash; <span class="vue">"เมื่อคืน build เป็นไง"</span> ตอบใน 3 วินาที
+              </p>
+              <div class="center"><img src="screenshots/01-dashboard.png" alt="hub dashboard" class="shot" /></div>
+            </template>
+
+            <!-- 11. Pipeline -->
+            <template v-else-if="currentIndex === 10">
+              <h2>Pipeline &mdash; one-click run</h2>
+              <p class="muted small" style="margin-bottom: 10px;">
+                Stage 5 spawns <code>npx playwright test --grep @smoke</code> &middot; stdout via SSE
+              </p>
+              <div class="center"><img src="screenshots/02-pipeline.png" alt="pipeline" class="shot" /></div>
+            </template>
+
+            <!-- 12. Bug Tracker -->
+            <template v-else-if="currentIndex === 11">
+              <h2>Bug tracker</h2>
+              <p class="muted small" style="margin-bottom: 10px;">
+                Aging badges &middot; severity &middot; ผูกกับ release gate (Critical/High open <span class="vue">=</span> NOGO)
+              </p>
+              <div class="center"><img src="screenshots/03-bugs.png" alt="bug tracker" class="shot" /></div>
+            </template>
+
+            <!-- 13. Release gate criteria -->
+            <template v-else-if="currentIndex === 12">
+              <h2>Release gate &mdash; <span class="vue">6 criteria</span></h2>
+              <p class="muted small" style="margin-bottom: 12px;">
+                <code>release_gate.py</code> ให้ verdict GO / NOGO / NOT_READY <span class="vue">based on evidence</span>
+              </p>
+              <div class="grid g-3">
+                <div class="card" v-for="g in gateCriteria" :key="g.n">
+                  <h4><span class="num">{{ g.n }}</span> {{ g.t }}</h4>
+                  <p class="small" v-html="g.body"></p>
+                </div>
+              </div>
+            </template>
+
+            <!-- 14. Release gate verdict -->
+            <template v-else-if="currentIndex === 13">
+              <h2>Release gate &mdash; verdict</h2>
+              <div class="center"><img src="screenshots/04-release-gate.png" alt="release gate" class="shot" /></div>
+            </template>
+
+            <!-- 15. Schedule -->
+            <template v-else-if="currentIndex === 14">
+              <h2>Daily smoke <span class="muted">@</span> 02:00</h2>
+              <p class="muted small" style="margin-bottom: 10px;">
+                Scheduler thread &middot; daily / weekly / cron &middot; ผลลง run_history เหมือน manual run
+              </p>
+              <div class="center"><img src="screenshots/05-schedule.png" alt="schedule" class="shot" /></div>
+            </template>
+
+            <!-- 16. User Guide -->
+            <template v-else-if="currentIndex === 15">
+              <h2>Self-documenting &mdash; User Guide</h2>
+              <p class="muted small" style="margin-bottom: 10px;">
+                Daily route + cycle ในตัว &middot; legacy + Vue v2 sync ทุก feature
+              </p>
+              <div class="center"><img src="screenshots/06-user-guide.png" alt="user guide" class="shot" /></div>
+            </template>
+
+            <!-- 17. Why JSON -->
+            <template v-else-if="currentIndex === 16">
+              <h2>Why JSON &mdash; not SQL?</h2>
+              <p class="muted small" style="margin-bottom: 12px;">
+                Architecturally non-obvious choice &middot; <span class="vue">explicit trade-off</span>
+              </p>
+              <div class="grid g-2">
+                <div class="card" v-for="j in jsonReasons" :key="j.t">
+                  <h4><span class="num">+</span> {{ j.t }}</h4>
+                  <p class="small" v-html="j.body"></p>
+                </div>
+              </div>
+              <div class="card" style="margin-top: 12px; border-color: rgba(217, 119, 6, 0.4);">
+                <h4 style="color: var(--c-warn);">&minus; Trade-off</h4>
+                <p class="small">ไม่ scale multi-team multi-writer &mdash; swap to Postgres ถ้าทีมโตกว่า ~10 engineers (~1 day work, endpoints unchanged).</p>
+              </div>
+            </template>
+
+            <!-- 18. CI -->
+            <template v-else-if="currentIndex === 17">
+              <h2>CI &mdash; GitHub Actions</h2>
+              <pre class="code"><span class="kw">name</span>: saucedemo-playwright
+<span class="kw">on</span>: [push, pull_request, workflow_dispatch]
+
+<span class="kw">jobs</span>:
+  <span class="fn">test</span>:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/saucedemo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: <span class="str">"20"</span>, cache: <span class="str">"npm"</span> }
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: projects/saucedemo/playwright-report/</pre>
+            </template>
+
+            <!-- 19. Roadmap -->
+            <template v-else-if="currentIndex === 18">
+              <h2>What's next</h2>
+              <div class="grid g-2" style="margin-top: 12px;">
+                <div class="card" v-for="r in roadmap" :key="r.n">
+                  <h4><span class="num">{{ r.n }}</span> {{ r.t }}</h4>
+                  <p class="small" v-html="r.body"></p>
+                </div>
+              </div>
+            </template>
+
+            <!-- 20. Thanks -->
+            <template v-else-if="currentIndex === 19">
+              <div class="hero center">
+                <span class="badge"><span class="dot"></span> Thank you</span>
+                <h1 style="margin: 18px 0 8px 0;">Let's build <span class="vue">great QA</span> together</h1>
+                <p class="muted" style="font-size: 16px;">
+                  <code>./setup.ps1</code> <span class="muted">&rarr;</span> <code>http://localhost:8080</code>
+                </p>
+                <div class="divider"></div>
+                <p class="muted small">
+                  Repo: <a href="https://github.com/ArtSadVoice/qa-hub-saucedemo" style="color:var(--c-vue);">github.com/ArtSadVoice/qa-hub-saucedemo</a>
+                </p>
+                <div style="margin-top: 18px;">
+                  <span class="chip green">17 tests</span>
+                  <span class="chip green">~17 s</span>
+                  <span class="chip">100% pass</span>
+                  <span class="chip">MIT</span>
+                  <span class="chip">CI green</span>
+                </div>
+              </div>
+            </template>
+
+          </section>
+        </transition>
+      </main>
+
+      <!-- ===== controls ===== -->
+      <footer class="controls">
+        <div class="pager">
+          <span class="current">{{ String(currentIndex + 1).padStart(2, '0') }}</span>
+          <span class="muted"> / {{ String(slideTitles.length).padStart(2, '0') }}</span>
+          <span class="muted" style="margin-left: 14px;">&larr; &rarr; nav &middot; <kbd style="font-size:10px;">o</kbd> overview &middot; <kbd style="font-size:10px;">f</kbd> fullscreen</span>
+        </div>
+        <div class="nav-btns">
+          <button class="nav-btn icon-overview" @click="overview = !overview" title="Overview (O)">{{ overview ? 'X' : 'O' }}</button>
+          <button class="nav-btn" @click="prev" :disabled="currentIndex === 0" title="Prev (←)">&larr;</button>
+          <button class="nav-btn" @click="next" :disabled="currentIndex === slideTitles.length - 1" title="Next (→)">&rarr;</button>
+        </div>
+      </footer>
+
+      <!-- ===== overview mode ===== -->
+      <transition name="slide">
+        <div v-if="overview" class="overview-grid" @click.self="overview = false">
+          <div class="overview-header">
+            <span>Overview &middot; press <kbd>O</kbd> to close</span>
+            <span>{{ slideTitles.length }} slides</span>
+          </div>
+          <div
+            v-for="(t, i) in slideTitles"
+            :key="i"
+            :class="['overview-tile', { active: i === currentIndex }]"
+            @click="goTo(i)"
+          >
+            <span class="ot-num">{{ String(i + 1).padStart(2, '0') }}</span>
+            <span class="ot-title">{{ t }}</span>
+          </div>
+        </div>
+      </transition>
+
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { createApp, ref, computed, onMounted, onBeforeUnmount } from "https://unpkg.com/vue@3.4/dist/vue.esm-browser.prod.js";
+
+  createApp({
+    setup() {
+      const slideTitles = [
+        "Title — QA Hub / saucedemo",
+        "Why this exists",
+        "The stack",
+        "Architecture",
+        "System under test",
+        "6 users = 6 scenarios",
+        "Tests read like requirements",
+        "17 tests · 17 seconds",
+        "What the bot sees",
+        "Hub dashboard",
+        "Pipeline — one-click run",
+        "Bug tracker",
+        "Release gate — 6 criteria",
+        "Release gate — verdict",
+        "Daily smoke @ 02:00",
+        "Self-documenting — User Guide",
+        "Why JSON — not SQL?",
+        "CI — GitHub Actions",
+        "What's next",
+        "Thank you",
+      ];
+
+      const currentIndex = ref(0);
+      const overview = ref(false);
+
+      const progress = computed(
+        () => Math.round(((currentIndex.value + 1) / slideTitles.length) * 100)
+      );
+
+      function next() {
+        if (currentIndex.value < slideTitles.length - 1) currentIndex.value++;
+      }
+      function prev() {
+        if (currentIndex.value > 0) currentIndex.value--;
+      }
+      function goTo(i) {
+        currentIndex.value = i;
+        overview.value = false;
+      }
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+      }
+
+      function onKey(e) {
+        if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") next();
+        else if (e.key === "ArrowLeft" || e.key === "PageUp") prev();
+        else if (e.key === "Home") currentIndex.value = 0;
+        else if (e.key === "End") currentIndex.value = slideTitles.length - 1;
+        else if (e.key === "o" || e.key === "O") overview.value = !overview.value;
+        else if (e.key === "f" || e.key === "F") toggleFullscreen();
+        else if (e.key === "Escape") overview.value = false;
+      }
+
+      onMounted(() => {
+        window.addEventListener("keydown", onKey);
+        // Read hash on load (e.g. #5 jumps to slide 5)
+        const hash = parseInt(location.hash.replace("#", ""), 10);
+        if (!isNaN(hash) && hash >= 1 && hash <= slideTitles.length) {
+          currentIndex.value = hash - 1;
+        }
+      });
+      onBeforeUnmount(() => {
+        window.removeEventListener("keydown", onKey);
+      });
+
+      // sync hash on slide change
+      const updateHash = () => {
+        location.hash = String(currentIndex.value + 1);
+      };
+      // simple watch via computed effect substitute
+      computed(() => {
+        updateHash();
+        return currentIndex.value;
+      });
+
+      // ---- slide content data ----
+      const problemCards = [
+        {
+          n: "01",
+          t: "Problem",
+          bullets: [
+            "Local runs — trend ไม่มีใครเห็น",
+            "Bugs ติดอยู่ใน head ของผู้รัน",
+            '"Ready to ship?" → gut feeling, not data',
+            "Schedule = Windows Task Scheduler manual",
+          ],
+        },
+        {
+          n: "02",
+          t: "Solution",
+          bullets: [
+            "1 hub — trend chart + run history",
+            "Tag-based runs — @smoke / @e2e / @regression",
+            "Release gate — verdict GO/NOGO อัตโนมัติ",
+            "Built-in scheduler thread + bug tracker",
+          ],
+        },
+      ];
+
+      const stackCards = [
+        { n: "test", t: "Playwright", body: "TypeScript &middot; Page Object Model<br/>Tag-based filtering<br/><span class='muted tiny'>npx playwright test --grep @smoke</span>" },
+        { n: "api",  t: "Flask",      body: "~70 routes &middot; SSE for live logs<br/>Background scheduler thread<br/><span class='muted tiny'>Python 3.11+</span>" },
+        { n: "ui",   t: "Vue 3 + Pinia", body: "Strangler-fig migration<br/>Legacy + Vue v2 share /api/*<br/><span class='muted tiny'>Vite build</span>" },
+        { n: "data", t: "JSON files",   body: "<code>config.json</code> &middot; <code>run_history.json</code><br/><code>schedules.json</code> &middot; <code>bugs/*.json</code><br/><span class='muted tiny'>Atomic temp + rename</span>" },
+        { n: "ci",   t: "GitHub Actions", body: "Run on push + PR<br/>Upload Playwright HTML report<br/><span class='muted tiny'>14-day artifact retention</span>" },
+        { n: "sut",  t: "saucedemo.com",  body: "Live e-commerce &middot; 6 test users<br/>Happy / locked / problem / glitch / error<br/><span class='muted tiny'>No mocks, real network</span>" },
+      ];
+
+      const testUsers = [
+        { name: "standard_user",            tag: "happy",  tone: "green", desc: "Baseline — shop, checkout, logout end-to-end." },
+        { name: "locked_out_user",          tag: "edge",   tone: "red",   desc: "Login error message — assert exact copy." },
+        { name: "problem_user",             tag: "visual", tone: "amber", desc: "All product images = same dog photo. Visual regression target." },
+        { name: "performance_glitch_user",  tag: "perf",   tone: "amber", desc: "Slow login — verify timeouts & loading states." },
+        { name: "error_user",               tag: "edge",   tone: "red",   desc: "Form validation breaks — assert correct error UX." },
+        { name: "visual_user",              tag: "visual", tone: "amber", desc: "Subtle layout shifts — src/CSS diff catches them." },
+      ];
+
+      const gateCriteria = [
+        { n: "01", t: "Run scope",          body: "tag &ge; <code>@e2e</code> หรือ <code>All</code>" },
+        { n: "02", t: "Pass rate",          body: "&ge; 80% (configurable)" },
+        { n: "03", t: "No Critical bugs",   body: "hard fail" },
+        { n: "04", t: "No High bugs",       body: "warn band 1-2" },
+        { n: "05", t: "Screenshots",        body: "<code>test-results/**/*.png</code>" },
+        { n: "06", t: "HTML report",        body: "<code>playwright-report/index.html</code>" },
+      ];
+
+      const jsonReasons = [
+        { t: "Auditable",          body: "ทุก state change เห็นใน <code>git diff</code>" },
+        { t: "Recoverable",        body: "Copy/paste 1 ไฟล์ก็ restore" },
+        { t: "No migration drama", body: "Schema อยู่ใน code — ไม่ alter table" },
+        { t: "Fast enough",        body: "Atomic temp+rename &middot; parse &lt; 1 ms (cap 500 entries)" },
+      ];
+
+      const roadmap = [
+        { n: "01", t: "Live deployment",  body: "Render / Fly.io free tier — public URL ที่ HR เปิดดูได้ทันที" },
+        { n: "02", t: "Mobile viewport",  body: "<code>saucedemo-mobile</code> registered as <code>planning</code> — activate Pixel 7 viewport + visual snapshots" },
+        { n: "03", t: "Allure report",    body: "แทน pytest-html — trend ละเอียด + history per test" },
+        { n: "04", t: "Slack webhook",    body: "Notify เฉพาะ scheduled run ที่ fail (ไม่สแปม manual)" },
+      ];
+
+      return {
+        slideTitles,
+        currentIndex,
+        overview,
+        progress,
+        next,
+        prev,
+        goTo,
+        problemCards,
+        stackCards,
+        testUsers,
+        gateCriteria,
+        jsonReasons,
+        roadmap,
+      };
+    },
+  }).mount("#app");
+</script>
+
+</body>
+</html>
