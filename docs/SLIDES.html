@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>QA Hub Demo &mdash; saucedemo.com</title>
+
+  <!-- reveal.js core + clean light theme (white) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/dist/theme/white.css" id="theme" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/plugin/highlight/monokai.css" />
+
+  <style>
+    :root {
+      --c-bg: #ffffff;
+      --c-text: #1f2937;
+      --c-muted: #6b7280;
+      --c-accent: #2563eb;
+      --c-accent-soft: #dbeafe;
+      --c-success: #16a34a;
+      --c-warn: #d97706;
+      --c-danger: #dc2626;
+      --c-border: #e5e7eb;
+      --c-card: #f9fafb;
+    }
+
+    .reveal {
+      font-family: "Inter", "Segoe UI", "Sarabun", system-ui, sans-serif;
+      color: var(--c-text);
+      font-size: 26px;
+    }
+    .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+      font-family: "Inter", "Segoe UI", "Sarabun", system-ui, sans-serif;
+      color: var(--c-text);
+      text-transform: none;
+      letter-spacing: -0.01em;
+      font-weight: 700;
+    }
+    .reveal h1 { font-size: 2.4em; }
+    .reveal h2 { font-size: 1.6em; margin-bottom: 0.3em; }
+    .reveal h3 { font-size: 1.15em; color: var(--c-accent); margin-bottom: 0.4em; }
+    .reveal p, .reveal li { line-height: 1.5; }
+    .reveal a { color: var(--c-accent); text-decoration: none; }
+    .reveal a:hover { text-decoration: underline; }
+    .reveal section { text-align: left; }
+    .reveal .center { text-align: center; }
+
+    .reveal .accent { color: var(--c-accent); }
+    .reveal .muted  { color: var(--c-muted); }
+    .reveal .small  { font-size: 0.78em; }
+    .reveal .tiny   { font-size: 0.62em; }
+
+    /* hero (title slide) */
+    .hero {
+      background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 60%, #f9fafb 100%);
+      padding: 1.4em;
+      border-radius: 14px;
+      border: 1px solid var(--c-border);
+    }
+    .hero .badge {
+      display: inline-block;
+      background: var(--c-accent-soft);
+      color: var(--c-accent);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.7em;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* cards */
+    .grid { display: grid; gap: 18px; }
+    .grid.g-2 { grid-template-columns: 1fr 1fr; }
+    .grid.g-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .card {
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .card h4 { color: var(--c-accent); margin: 0 0 6px 0; font-size: 0.95em; }
+    .card p, .card ul { margin: 0; font-size: 0.78em; color: var(--c-text); }
+    .card ul { padding-left: 1.1em; }
+
+    .stat {
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      text-align: center;
+    }
+    .stat .num { font-size: 2.2em; font-weight: 700; color: var(--c-accent); line-height: 1; }
+    .stat .lbl { color: var(--c-muted); font-size: 0.72em; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    .chip {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.62em;
+      font-weight: 600;
+      margin: 2px 4px 2px 0;
+      background: var(--c-accent-soft);
+      color: var(--c-accent);
+    }
+    .chip.green  { background: #dcfce7; color: var(--c-success); }
+    .chip.amber  { background: #fef3c7; color: var(--c-warn); }
+    .chip.gray   { background: #e5e7eb; color: var(--c-muted); }
+
+    /* screenshots */
+    .reveal .shot {
+      max-height: 60vh;
+      width: auto;
+      border-radius: 10px;
+      border: 1px solid var(--c-border);
+      box-shadow: 0 6px 28px rgba(15, 23, 42, 0.08);
+      background: #fff;
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* code block tweaks */
+    .reveal pre {
+      box-shadow: none;
+      border-radius: 10px;
+      width: 100%;
+      font-size: 0.62em;
+    }
+    .reveal pre code {
+      padding: 14px;
+      max-height: 60vh;
+    }
+
+    .reveal .ascii-diagram {
+      font-family: "JetBrains Mono", "Consolas", monospace;
+      font-size: 0.55em;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 18px;
+      border-radius: 10px;
+      line-height: 1.35;
+      white-space: pre;
+      overflow: auto;
+    }
+
+    /* progress bar */
+    .reveal .progress { color: var(--c-accent); }
+
+    /* footer */
+    .reveal .slide-footer {
+      position: absolute;
+      bottom: 18px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: var(--c-muted);
+      font-size: 0.55em;
+    }
+  </style>
+</head>
+<body>
+
+<div class="reveal">
+  <div class="slides">
+
+    <!-- 1. Title -->
+    <section data-background-color="#ffffff">
+      <div class="hero center">
+        <span class="badge">Portfolio &middot; QA Engineer</span>
+        <h1 style="margin: 0.4em 0 0.2em 0;">QA Hub Demo</h1>
+        <p style="margin: 0; font-size: 1.1em;" class="muted">
+          End-to-end test orchestration for <span class="accent">saucedemo.com</span>
+        </p>
+        <div style="margin-top: 1.4em;">
+          <span class="chip">Playwright TS</span>
+          <span class="chip">Flask &middot; Vue 3</span>
+          <span class="chip">JSON-state</span>
+          <span class="chip">GitHub Actions</span>
+        </div>
+        <p class="small muted" style="margin-top: 1.6em;">
+          Built end-to-end &middot; 17 tests &middot; ~17 s runtime
+        </p>
+      </div>
+      <div class="slide-footer">github.com/ArtSadVoice/qa-hub-saucedemo</div>
+    </section>
+
+    <!-- 2. The pitch in 30 seconds -->
+    <section>
+      <h2>The pitch in 30 seconds</h2>
+      <p class="muted small" style="margin-top: -8px;">
+        QA team ใช้ Playwright + Pytest หลายตัว แต่ไม่มีศูนย์กลาง
+        &mdash; เห็น trend ไม่ออก ติดตาม bug ลำบาก
+      </p>
+      <div class="grid g-2" style="margin-top: 18px;">
+        <div class="card">
+          <h4>Problem</h4>
+          <ul>
+            <li>Local runs &mdash; nobody sees the trend</li>
+            <li>Bugs ติดอยู่ใน head ของผู้รัน</li>
+            <li>"Ready to ship?" ตอบไม่ได้</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Solution</h4>
+          <ul>
+            <li>Hub กลาง &mdash; 1 dashboard ดู trend</li>
+            <li>Tag-based runs (smoke / e2e / regression / visual)</li>
+            <li>Release gate ให้ verdict GO/NOGO อัตโนมัติ</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Tech stack -->
+    <section>
+      <h2>Tech stack</h2>
+      <div class="grid g-3" style="margin-top: 12px;">
+        <div class="card">
+          <h4>Test layer</h4>
+          <p class="small">
+            <strong>Playwright</strong> &middot; TypeScript<br />
+            Page Object Model<br />
+            Tag-based filtering (<code>--grep @smoke</code>)
+          </p>
+        </div>
+        <div class="card">
+          <h4>Hub backend</h4>
+          <p class="small">
+            <strong>Flask</strong> &middot; ~70 routes<br />
+            Server-Sent Events for live logs<br />
+            Background scheduler thread
+          </p>
+        </div>
+        <div class="card">
+          <h4>Hub UI</h4>
+          <p class="small">
+            <strong>Vue 3</strong> + Pinia + Vite<br />
+            Legacy vanilla-JS dashboard<br />
+            Strangler-fig migration (both live)
+          </p>
+        </div>
+        <div class="card">
+          <h4>State</h4>
+          <p class="small">
+            JSON files &mdash; not SQL<br />
+            <code>config.json</code> &middot; <code>run_history.json</code><br />
+            <code>schedules.json</code> &middot; <code>bugs/</code>
+          </p>
+        </div>
+        <div class="card">
+          <h4>CI</h4>
+          <p class="small">
+            <strong>GitHub Actions</strong><br />
+            Run tests on PR + push<br />
+            Upload Playwright HTML report
+          </p>
+        </div>
+        <div class="card">
+          <h4>Target</h4>
+          <p class="small">
+            <strong>saucedemo.com</strong> &mdash; live site<br />
+            6 built-in test users (happy / locked / problem / glitch / error / visual)
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Architecture -->
+    <section>
+      <h2>Architecture</h2>
+      <p class="muted small" style="margin-top: -6px;">
+        Browser &rarr; Flask &rarr; JSON state &rarr; spawn Playwright
+      </p>
+      <pre class="ascii-diagram">
+ Browser (localhost:8080)
+ +-----------------------------+    +-----------------------------+
+ | Legacy dashboard ( / )      |    | Vue v2 dashboard ( /v2/ )   |
+ +--------------+--------------+    +--------------+--------------+
+                |                                  |
+                +------- fetch /api/* -------------+
+                                |
+ +------------------------------V------------------------------+
+ |                  Flask app (hub/app.py)                     |
+ |  /api/projects   /api/run/log     /api/release-gate         |
+ |  /api/run/tests (SSE)   /api/bugs/*   /api/schedules/*      |
+ +-------+-----------------+--------------+--------------------+
+         |                 |              |
+   release_gate.py   scheduler thread   validators
+                                |
+ +------------------------------V-------------------------------+
+ |                       State (JSON)                           |
+ |   config.json   run_history.json   schedules.json   bugs/*   |
+ +------------------------------+-------------------------------+
+                                |  spawn / read
+ +------------------------------V-------------------------------+
+ |   projects/saucedemo/ &mdash; npx playwright test --grep @smoke |
+ |   stdout streamed via SSE &rarr; appended to run_history.json   |
+ +--------------------------------------------------------------+
+      </pre>
+    </section>
+
+    <!-- 5. Test target: saucedemo.com -->
+    <section>
+      <h2>Test target: <span class="accent">saucedemo.com</span></h2>
+      <p class="muted small" style="margin-top: -6px;">
+        ใช้ live e-commerce site ของจริงเป็น target &mdash; 6 test users built-in
+      </p>
+      <img src="screenshots/07-saucedemo-home.png" alt="saucedemo login" class="shot" />
+    </section>
+
+    <!-- 6. Test users -->
+    <section>
+      <h2>Six users = six scenarios</h2>
+      <div class="grid g-2" style="margin-top: 12px;">
+        <div class="card">
+          <h4><span class="chip green">happy</span> standard_user</h4>
+          <p class="small">Baseline &mdash; shop, checkout, logout work end-to-end.</p>
+        </div>
+        <div class="card">
+          <h4><span class="chip">edge</span> locked_out_user</h4>
+          <p class="small">Login error message &mdash; assert exact copy.</p>
+        </div>
+        <div class="card">
+          <h4><span class="chip amber">visual</span> problem_user</h4>
+          <p class="small">All product images = same dog photo. Visual regression baseline.</p>
+        </div>
+        <div class="card">
+          <h4><span class="chip amber">perf</span> performance_glitch_user</h4>
+          <p class="small">Slow login &mdash; verify timeouts &amp; loading states.</p>
+        </div>
+        <div class="card">
+          <h4><span class="chip">edge</span> error_user</h4>
+          <p class="small">Form validation breaks &mdash; assert correct error UX.</p>
+        </div>
+        <div class="card">
+          <h4><span class="chip amber">visual</span> visual_user</h4>
+          <p class="small">Subtle layout shifts &mdash; pixel diff catches them.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Page Object Model snippet -->
+    <section>
+      <h2>Tests read like requirements</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        Page Object Model + <code>TEST_USERS</code> const &rarr; spec ไม่มี string magic
+      </p>
+      <pre><code class="language-ts" data-trim data-noescape>
+// tests/pages/LoginPage.ts
+export const TEST_USERS = {
+  standard:    { username: "standard_user",            password: "secret_sauce" },
+  locked:      { username: "locked_out_user",          password: "secret_sauce" },
+  problem:     { username: "problem_user",             password: "secret_sauce" },
+  performance: { username: "performance_glitch_user",  password: "secret_sauce" },
+} as const;
+
+// tests/e2e/TS_01_login.spec.ts
+test("standard user logs in @smoke", async ({ page }) =&gt; {
+  const login = new LoginPage(page);
+  await login.goto();
+  await login.loginAs("standard");
+  await expect(page).toHaveURL(/inventory.html/);
+});
+      </code></pre>
+    </section>
+
+    <!-- 8. 17 tests in 17 seconds -->
+    <section>
+      <h2>17 tests &middot; 17 seconds</h2>
+      <div class="grid g-3" style="margin-top: 14px;">
+        <div class="stat"><div class="num">4</div><div class="lbl">@smoke</div></div>
+        <div class="stat"><div class="num">2</div><div class="lbl">@e2e</div></div>
+        <div class="stat"><div class="num">10</div><div class="lbl">@regression</div></div>
+      </div>
+      <div class="grid g-2" style="margin-top: 14px;">
+        <div class="stat"><div class="num">1</div><div class="lbl">@visual</div></div>
+        <div class="stat"><div class="num">100<span style="font-size:0.5em;">%</span></div><div class="lbl">pass rate</div></div>
+      </div>
+      <p class="small muted center" style="margin-top: 18px;">
+        TS_01 login &middot; TS_02 inventory &middot; TS_03 cart &middot; TS_04 checkout &middot; TS_05 logout &middot; TS_06 visual
+      </p>
+    </section>
+
+    <!-- 9. Saucedemo inventory shot -->
+    <section>
+      <h2>What the bot sees</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        After <code>loginAs(&quot;standard&quot;)</code> &mdash; 6 products, sort, add-to-cart, checkout flow
+      </p>
+      <img src="screenshots/08-saucedemo-inventory.png" alt="saucedemo inventory" class="shot" />
+    </section>
+
+    <!-- 10. Hub screenshot: dashboard -->
+    <section>
+      <h2>Hub dashboard</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        Trend chart + stats + run history &mdash; one glance answers "เมื่อคืน build เป็นไง"
+      </p>
+      <img src="screenshots/01-dashboard.png" alt="hub dashboard" class="shot" />
+    </section>
+
+    <!-- 11. Pipeline -->
+    <section>
+      <h2>Pipeline &mdash; one click run</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        Stage 5 spawns <code>npx playwright test --grep @smoke</code> &middot; stdout streams via SSE
+      </p>
+      <img src="screenshots/02-pipeline.png" alt="pipeline" class="shot" />
+    </section>
+
+    <!-- 12. Bug Tracker -->
+    <section>
+      <h2>Bug tracker</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        Aging badges &middot; severity &middot; ผูกกับ release gate (Critical/High open = NOGO)
+      </p>
+      <img src="screenshots/03-bugs.png" alt="bug tracker" class="shot" />
+    </section>
+
+    <!-- 13. Release Gate -->
+    <section>
+      <h2>Release gate &mdash; 6 criteria</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        <code>release_gate.py</code> ให้ verdict GO / NOGO / NOT_READY ตามหลักฐาน ไม่ใช่ feel
+      </p>
+      <div class="grid g-2">
+        <div>
+          <div class="card"><h4>1. Run scope</h4><p class="small">tag &ge; <code>@e2e</code> หรือ <code>All</code></p></div>
+          <div class="card" style="margin-top:10px;"><h4>2. Pass rate</h4><p class="small">&ge; 80% (configurable)</p></div>
+          <div class="card" style="margin-top:10px;"><h4>3. No Critical bugs open</h4><p class="small">hard fail</p></div>
+        </div>
+        <div>
+          <div class="card"><h4>4. No High bugs open</h4><p class="small">warn band 1-2</p></div>
+          <div class="card" style="margin-top:10px;"><h4>5. Screenshots present</h4><p class="small"><code>test-results/**/*.png</code></p></div>
+          <div class="card" style="margin-top:10px;"><h4>6. HTML report ready</h4><p class="small"><code>playwright-report/index.html</code></p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14. Release gate screenshot -->
+    <section>
+      <h2>Release gate &mdash; verdict</h2>
+      <img src="screenshots/04-release-gate.png" alt="release gate" class="shot" />
+    </section>
+
+    <!-- 15. Schedule -->
+    <section>
+      <h2>Daily smoke at 02:00</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        Scheduler thread &middot; daily / weekly / cron &middot; ผลลง run_history เหมือน manual run
+      </p>
+      <img src="screenshots/05-schedule.png" alt="schedule" class="shot" />
+    </section>
+
+    <!-- 16. User guide -->
+    <section>
+      <h2>Self-documenting &mdash; User Guide tab</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        Daily route + cycle ในตัว &middot; legacy + Vue v2 sync ทุก feature
+      </p>
+      <img src="screenshots/06-user-guide.png" alt="user guide" class="shot" />
+    </section>
+
+    <!-- 17. Why JSON -->
+    <section>
+      <h2>Why JSON state &mdash; not SQL?</h2>
+      <div class="grid g-2" style="margin-top: 16px;">
+        <div class="card">
+          <h4>Auditable</h4>
+          <p class="small">ทุก state change เห็นใน <code>git diff</code> ได้เลย</p>
+        </div>
+        <div class="card">
+          <h4>Recoverable</h4>
+          <p class="small">Copy/paste 1 ไฟล์ก็ restore ได้</p>
+        </div>
+        <div class="card">
+          <h4>No migration drama</h4>
+          <p class="small">Schema อยู่ใน code &mdash; ไม่ต้อง alter table</p>
+        </div>
+        <div class="card">
+          <h4>Fast enough</h4>
+          <p class="small">Atomic temp+rename &middot; parse &lt; 1 ms (cap 500 entries)</p>
+        </div>
+      </div>
+      <p class="tiny muted center" style="margin-top: 18px;">
+        Trade-off: ไม่เหมาะ scale หลาย-team / multi-writer &mdash; แต่สำหรับ small QA hub มันคือ sweet spot
+      </p>
+    </section>
+
+    <!-- 18. CI -->
+    <section>
+      <h2>CI &mdash; GitHub Actions</h2>
+      <pre><code class="language-yaml" data-trim data-noescape>
+name: saucedemo-playwright
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/saucedemo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: "npm" }
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: projects/saucedemo/playwright-report/
+      </code></pre>
+    </section>
+
+    <!-- 19. Roadmap -->
+    <section>
+      <h2>What I'd build next</h2>
+      <div class="grid g-2" style="margin-top: 16px;">
+        <div class="card">
+          <h4>1. Live deployment</h4>
+          <p class="small">Render / Fly.io free tier &mdash; public URL ที่ HR เปิดดูได้ทันที</p>
+        </div>
+        <div class="card">
+          <h4>2. Mobile viewport project</h4>
+          <p class="small"><code>saucedemo-mobile</code> registered as <code>planning</code> แล้ว &mdash; เปิด pixel-7 viewport + visual snapshot</p>
+        </div>
+        <div class="card">
+          <h4>3. Allure report</h4>
+          <p class="small">แทน pytest-html เพื่อ trend ละเอียด + history</p>
+        </div>
+        <div class="card">
+          <h4>4. Slack webhook</h4>
+          <p class="small">Notify เฉพาะ scheduled run ที่ fail (ไม่สแปม manual)</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 20. Thanks -->
+    <section data-background-color="#ffffff">
+      <div class="hero center">
+        <span class="badge">Thank you</span>
+        <h1 style="margin: 0.4em 0 0.2em 0;">Let's build great QA together</h1>
+        <p class="muted" style="font-size: 1em;">
+          Repo: <a href="https://github.com/ArtSadVoice/qa-hub-saucedemo">github.com/ArtSadVoice/qa-hub-saucedemo</a>
+        </p>
+        <p class="muted small" style="margin-top: 1.2em;">
+          Run locally:&nbsp; <code>./setup.ps1</code> &nbsp;&rarr;&nbsp; <code>http://localhost:8080</code>
+        </p>
+        <div style="margin-top: 1.4em;">
+          <span class="chip green">17 tests</span>
+          <span class="chip green">~17 s</span>
+          <span class="chip">100% pass</span>
+          <span class="chip">MIT</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/plugin/notes/notes.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: "c/t",
+    transition: "fade",
+    width: 1280,
+    height: 800,
+    margin: 0.06,
+    plugins: [RevealHighlight, RevealNotes],
+  });
+</script>
+
+</body>
+</html>

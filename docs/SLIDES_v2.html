@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>QA Hub Demo &mdash; saucedemo.com (v2)</title>
+
+  <!-- reveal.js core + black base; we override almost everything below -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/dist/theme/black.css" id="theme" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/plugin/highlight/monokai.css" />
+
+  <!-- modern fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --c-bg-0: #0b1020;
+      --c-bg-1: #0f172a;
+      --c-bg-2: #111827;
+      --c-card: rgba(148, 163, 184, 0.06);
+      --c-border: rgba(148, 163, 184, 0.18);
+      --c-text: #e2e8f0;
+      --c-muted: #94a3b8;
+      --c-accent: #22d3ee;
+      --c-accent-2: #60a5fa;
+      --c-accent-3: #a78bfa;
+      --c-success: #34d399;
+      --c-warn: #fbbf24;
+      --c-danger: #f87171;
+      --c-mono: "JetBrains Mono", "Consolas", monospace;
+    }
+
+    html, body { background: var(--c-bg-0); }
+
+    /* subtle animated gradient backdrop */
+    .reveal-viewport {
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(34, 211, 238, 0.10), transparent 60%),
+        radial-gradient(900px 600px at 95% 105%, rgba(167, 139, 250, 0.10), transparent 60%),
+        linear-gradient(180deg, var(--c-bg-0) 0%, var(--c-bg-1) 50%, var(--c-bg-2) 100%);
+    }
+
+    .reveal {
+      font-family: "Inter", "Segoe UI", "Sarabun", system-ui, sans-serif;
+      color: var(--c-text);
+      font-size: 26px;
+    }
+    .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+      font-family: "Inter", system-ui, sans-serif;
+      color: var(--c-text);
+      text-transform: none;
+      letter-spacing: -0.02em;
+      font-weight: 800;
+    }
+    .reveal h1 { font-size: 2.6em; line-height: 1.1; }
+    .reveal h2 {
+      font-size: 1.7em;
+      margin-bottom: 0.25em;
+      background: linear-gradient(90deg, #f8fafc 0%, #cbd5e1 70%, var(--c-accent) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .reveal h3 { font-size: 1.1em; color: var(--c-accent); margin-bottom: 0.4em; font-weight: 600; }
+    .reveal p, .reveal li { line-height: 1.55; color: var(--c-text); }
+    .reveal a { color: var(--c-accent); text-decoration: none; border-bottom: 1px dashed rgba(34, 211, 238, 0.5); }
+    .reveal a:hover { color: var(--c-accent-2); border-bottom-color: var(--c-accent-2); }
+    .reveal section { text-align: left; }
+    .reveal .center { text-align: center; }
+
+    .reveal .accent  { color: var(--c-accent); }
+    .reveal .accent2 { color: var(--c-accent-2); }
+    .reveal .accent3 { color: var(--c-accent-3); }
+    .reveal .muted   { color: var(--c-muted); }
+    .reveal .small   { font-size: 0.78em; }
+    .reveal .tiny    { font-size: 0.62em; }
+
+    /* mono-styled inline code */
+    .reveal code {
+      font-family: var(--c-mono);
+      background: rgba(34, 211, 238, 0.08);
+      color: var(--c-accent);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+
+    /* hero slide */
+    .hero {
+      position: relative;
+      padding: 1.6em 1.4em;
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%),
+        radial-gradient(600px 200px at 50% 0%, rgba(34, 211, 238, 0.18), transparent 70%);
+      border: 1px solid var(--c-border);
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.4);
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      padding: 1px;
+      background: linear-gradient(135deg, var(--c-accent), transparent 40%, var(--c-accent-3));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(34, 211, 238, 0.10);
+      color: var(--c-accent);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.7em;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid rgba(34, 211, 238, 0.3);
+    }
+    .badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--c-accent);
+      box-shadow: 0 0 8px var(--c-accent);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* cards */
+    .grid { display: grid; gap: 16px; }
+    .grid.g-2 { grid-template-columns: 1fr 1fr; }
+    .grid.g-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .card {
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      backdrop-filter: blur(8px);
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: rgba(34, 211, 238, 0.4); }
+    .card h4 {
+      color: var(--c-accent);
+      margin: 0 0 6px 0;
+      font-size: 0.95em;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h4 .num {
+      font-family: var(--c-mono);
+      font-size: 0.7em;
+      color: var(--c-muted);
+      background: rgba(148, 163, 184, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .card p, .card ul { margin: 0; font-size: 0.78em; color: var(--c-text); }
+    .card ul { padding-left: 1.1em; }
+
+    /* stat tiles */
+    .stat {
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-radius: 12px;
+      padding: 22px 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--c-accent), var(--c-accent-2));
+    }
+    .stat .num {
+      font-family: var(--c-mono);
+      font-size: 2.4em;
+      font-weight: 700;
+      color: var(--c-accent);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .stat .lbl {
+      color: var(--c-muted);
+      font-size: 0.7em;
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 500;
+    }
+
+    /* chips */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 11px;
+      border-radius: 999px;
+      font-size: 0.62em;
+      font-weight: 600;
+      margin: 2px 4px 2px 0;
+      background: rgba(34, 211, 238, 0.10);
+      color: var(--c-accent);
+      border: 1px solid rgba(34, 211, 238, 0.25);
+      font-family: var(--c-mono);
+    }
+    .chip.green  { background: rgba(52, 211, 153, 0.10); color: var(--c-success); border-color: rgba(52, 211, 153, 0.30); }
+    .chip.amber  { background: rgba(251, 191, 36, 0.10); color: var(--c-warn);    border-color: rgba(251, 191, 36, 0.30); }
+    .chip.red    { background: rgba(248, 113, 113, 0.10); color: var(--c-danger); border-color: rgba(248, 113, 113, 0.30); }
+    .chip.gray   { background: rgba(148, 163, 184, 0.10); color: var(--c-muted);  border-color: rgba(148, 163, 184, 0.30); }
+
+    /* screenshots */
+    .reveal .shot {
+      max-height: 60vh;
+      width: auto;
+      border-radius: 12px;
+      border: 1px solid var(--c-border);
+      box-shadow:
+        0 0 0 1px rgba(34, 211, 238, 0.10),
+        0 20px 60px rgba(0, 0, 0, 0.5);
+      display: block;
+      margin: 0 auto;
+    }
+    .reveal .shot-frame {
+      position: relative;
+      display: inline-block;
+    }
+    .reveal .shot-frame::before {
+      content: "";
+      position: absolute;
+      inset: -10px;
+      background: radial-gradient(closest-side, rgba(34, 211, 238, 0.18), transparent 70%);
+      filter: blur(20px);
+      z-index: -1;
+    }
+
+    /* code block tweaks */
+    .reveal pre {
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+      border-radius: 12px;
+      width: 100%;
+      font-size: 0.62em;
+      border: 1px solid var(--c-border);
+      background: rgba(0, 0, 0, 0.4);
+    }
+    .reveal pre code {
+      padding: 16px 18px;
+      max-height: 60vh;
+      font-family: var(--c-mono);
+      background: transparent;
+      color: var(--c-text);
+    }
+
+    /* ascii diagram */
+    .reveal .ascii-diagram {
+      font-family: var(--c-mono);
+      font-size: 0.55em;
+      background: rgba(0, 0, 0, 0.5);
+      color: #cbd5e1;
+      padding: 18px 22px;
+      border-radius: 12px;
+      line-height: 1.4;
+      white-space: pre;
+      overflow: auto;
+      border: 1px solid var(--c-border);
+      box-shadow: inset 0 0 40px rgba(34, 211, 238, 0.05);
+    }
+    .reveal .ascii-diagram .hi {
+      color: var(--c-accent);
+      font-weight: 700;
+    }
+
+    /* progress + slide number */
+    .reveal .progress { color: var(--c-accent); height: 3px; }
+    .reveal .slide-number {
+      background: rgba(34, 211, 238, 0.12);
+      color: var(--c-accent);
+      font-family: var(--c-mono);
+      border: 1px solid rgba(34, 211, 238, 0.25);
+      border-radius: 6px;
+      padding: 4px 8px;
+    }
+
+    /* footer */
+    .reveal .slide-footer {
+      position: absolute;
+      bottom: 18px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: var(--c-muted);
+      font-size: 0.55em;
+      font-family: var(--c-mono);
+      letter-spacing: 0.04em;
+    }
+
+    /* terminal-style line */
+    .term-line {
+      font-family: var(--c-mono);
+      font-size: 0.7em;
+      color: var(--c-muted);
+    }
+    .term-line .prompt { color: var(--c-success); }
+    .term-line .flag   { color: var(--c-warn); }
+    .term-line .cmd    { color: var(--c-text); }
+
+    /* divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--c-border), transparent);
+      margin: 16px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="reveal">
+  <div class="slides">
+
+    <!-- 1. Title -->
+    <section>
+      <div class="hero center">
+        <span class="badge"><span class="dot"></span> Portfolio &middot; QA Engineer</span>
+        <h1 style="margin: 0.5em 0 0.25em 0;">QA Hub <span class="accent">/</span> saucedemo</h1>
+        <p style="margin: 0; font-size: 1.05em;" class="muted">
+          End-to-end test orchestration &mdash; built from scratch in 1 week
+        </p>
+        <div class="divider"></div>
+        <div>
+          <span class="chip">Playwright TS</span>
+          <span class="chip">Flask &middot; Vue 3</span>
+          <span class="chip">JSON-state</span>
+          <span class="chip">GitHub Actions</span>
+          <span class="chip green">17 tests / 17 s</span>
+        </div>
+        <p class="tiny muted" style="margin-top: 1.6em; letter-spacing: 0.1em;">
+          github.com/ArtSadVoice/qa-hub-saucedemo
+        </p>
+      </div>
+    </section>
+
+    <!-- 2. The pitch in 30 seconds -->
+    <section>
+      <h2>Why this exists</h2>
+      <p class="muted small" style="margin-top: -8px;">
+        Small QA team &middot; Playwright/pytest tools &middot; แต่ไม่มี <span class="accent">single source of truth</span>
+      </p>
+      <div class="grid g-2" style="margin-top: 18px;">
+        <div class="card">
+          <h4><span class="num">01</span> Problem</h4>
+          <ul>
+            <li>Local runs &mdash; trend ไม่มีใครเห็น</li>
+            <li>Bugs ติดอยู่ใน head ของผู้รัน</li>
+            <li>"Ready to ship?" &rarr; gut feeling, not data</li>
+            <li>Schedule = Windows Task Scheduler manual</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4><span class="num">02</span> Solution</h4>
+          <ul>
+            <li>1 hub &mdash; trend chart + run history</li>
+            <li>Tag-based runs &mdash; <code>@smoke</code> / <code>@e2e</code> / <code>@regression</code></li>
+            <li>Release gate &mdash; verdict GO/NOGO อัตโนมัติ</li>
+            <li>Built-in scheduler thread + bug tracker</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Tech stack -->
+    <section>
+      <h2>The stack</h2>
+      <div class="grid g-3" style="margin-top: 12px;">
+        <div class="card">
+          <h4><span class="num">test</span> Playwright</h4>
+          <p class="small">
+            TypeScript &middot; Page Object Model<br />
+            Tag-based filtering<br />
+            <span class="muted tiny">npx playwright test --grep @smoke</span>
+          </p>
+        </div>
+        <div class="card">
+          <h4><span class="num">api</span> Flask</h4>
+          <p class="small">
+            ~70 routes &middot; SSE for live logs<br />
+            Background scheduler thread<br />
+            <span class="muted tiny">Python 3.11+</span>
+          </p>
+        </div>
+        <div class="card">
+          <h4><span class="num">ui</span> Vue 3 + Pinia</h4>
+          <p class="small">
+            Strangler-fig migration<br />
+            Legacy + Vue v2 share /api/*<br />
+            <span class="muted tiny">Vite build</span>
+          </p>
+        </div>
+        <div class="card">
+          <h4><span class="num">data</span> JSON files</h4>
+          <p class="small">
+            <code>config.json</code> &middot; <code>run_history.json</code><br />
+            <code>schedules.json</code> &middot; <code>bugs/*.json</code><br />
+            <span class="muted tiny">Atomic temp + rename</span>
+          </p>
+        </div>
+        <div class="card">
+          <h4><span class="num">ci</span> GitHub Actions</h4>
+          <p class="small">
+            Run on push + PR<br />
+            Upload Playwright HTML report<br />
+            <span class="muted tiny">14-day artifact retention</span>
+          </p>
+        </div>
+        <div class="card">
+          <h4><span class="num">sut</span> saucedemo.com</h4>
+          <p class="small">
+            Live e-commerce &middot; 6 test users<br />
+            Happy / locked / problem / glitch / error<br />
+            <span class="muted tiny">No mocks, real network</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Architecture -->
+    <section>
+      <h2>Architecture</h2>
+      <p class="muted small" style="margin-top: -6px;">
+        Browser <span class="accent">&rarr;</span> Flask <span class="accent">&rarr;</span> JSON state <span class="accent">&rarr;</span> spawn Playwright
+      </p>
+      <pre class="ascii-diagram">
+ <span class="hi">Browser</span> (localhost:8080)
+ +-----------------------------+    +-----------------------------+
+ | Legacy dashboard ( / )      |    | Vue v2 dashboard ( /v2/ )   |
+ +--------------+--------------+    +--------------+--------------+
+                |                                  |
+                +------- fetch /api/* -------------+
+                                |
+ +------------------------------V------------------------------+
+ |                  <span class="hi">Flask app</span> (hub/app.py)                     |
+ |  /api/projects   /api/run/log     /api/release-gate         |
+ |  /api/run/tests (SSE)   /api/bugs/*   /api/schedules/*      |
+ +-------+-----------------+--------------+--------------------+
+         |                 |              |
+   release_gate.py   scheduler thread   validators
+                                |
+ +------------------------------V-------------------------------+
+ |                       <span class="hi">State (JSON)</span>                           |
+ |   config.json   run_history.json   schedules.json   bugs/*   |
+ +------------------------------+-------------------------------+
+                                |  spawn / read
+ +------------------------------V-------------------------------+
+ |   projects/saucedemo/ &mdash; <span class="hi">npx playwright test</span> --grep @smoke |
+ |   stdout streamed via SSE &rarr; appended to run_history.json   |
+ +--------------------------------------------------------------+
+      </pre>
+    </section>
+
+    <!-- 5. Test target: saucedemo.com -->
+    <section>
+      <h2>System under test</h2>
+      <p class="muted small" style="margin-top: -6px;">
+        Live site &middot; 6 built-in test users &middot; no mocks
+      </p>
+      <div class="center" style="margin-top: 14px;">
+        <div class="shot-frame"><img src="screenshots/07-saucedemo-home.png" alt="saucedemo login" class="shot" /></div>
+      </div>
+    </section>
+
+    <!-- 6. Test users -->
+    <section>
+      <h2>6 users <span class="muted">=</span> 6 scenarios</h2>
+      <p class="muted small" style="margin-top: -6px;">
+        Saucedemo's built-in personas <span class="accent">are</span> the test plan
+      </p>
+      <div class="grid g-2" style="margin-top: 12px;">
+        <div class="card">
+          <h4><span class="chip green">happy</span> standard_user</h4>
+          <p class="small">Baseline &mdash; shop, checkout, logout end-to-end.</p>
+        </div>
+        <div class="card">
+          <h4><span class="chip red">edge</span> locked_out_user</h4>
+          <p class="small">Login error message &mdash; assert exact copy.</p>
+        </div>
+        <div class="card">
+          <h4><span class="chip amber">visual</span> problem_user</h4>
+          <p class="small">All product images = same dog photo. Visual regression target.</p>
+        </div>
+        <div class="card">
+          <h4><span class="chip amber">perf</span> performance_glitch_user</h4>
+          <p class="small">Slow login &mdash; verify timeouts &amp; loading states.</p>
+        </div>
+        <div class="card">
+          <h4><span class="chip red">edge</span> error_user</h4>
+          <p class="small">Form validation breaks &mdash; assert correct error UX.</p>
+        </div>
+        <div class="card">
+          <h4><span class="chip amber">visual</span> visual_user</h4>
+          <p class="small">Subtle layout shifts &mdash; src/CSS diff catches them.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Page Object Model snippet -->
+    <section>
+      <h2>Tests read like requirements</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        <code>TEST_USERS</code> const &middot; spec ไม่มี string magic
+      </p>
+      <pre><code class="language-ts" data-trim data-noescape>
+// tests/pages/LoginPage.ts
+export const TEST_USERS = {
+  standard:    { username: "standard_user",            password: "secret_sauce" },
+  locked:      { username: "locked_out_user",          password: "secret_sauce" },
+  problem:     { username: "problem_user",             password: "secret_sauce" },
+  performance: { username: "performance_glitch_user",  password: "secret_sauce" },
+} as const;
+
+// tests/e2e/TS_01_login.spec.ts
+test("standard user logs in @smoke", async ({ page }) =&gt; {
+  const login = new LoginPage(page);
+  await login.goto();
+  await login.loginAs("standard");
+  await expect(page).toHaveURL(/inventory.html/);
+});
+      </code></pre>
+    </section>
+
+    <!-- 8. 17 tests in 17 seconds -->
+    <section>
+      <h2>17 tests <span class="muted">·</span> 17 seconds</h2>
+      <div class="grid g-3" style="margin-top: 14px;">
+        <div class="stat"><div class="num">4</div><div class="lbl">@smoke</div></div>
+        <div class="stat"><div class="num">2</div><div class="lbl">@e2e</div></div>
+        <div class="stat"><div class="num">10</div><div class="lbl">@regression</div></div>
+      </div>
+      <div class="grid g-2" style="margin-top: 14px;">
+        <div class="stat"><div class="num">1</div><div class="lbl">@visual</div></div>
+        <div class="stat"><div class="num">100<span style="font-size:0.55em;">%</span></div><div class="lbl">pass rate</div></div>
+      </div>
+      <p class="term-line center" style="margin-top: 22px;">
+        <span class="prompt">$</span> <span class="cmd">npx playwright test</span> <span class="flag">--grep</span> @smoke<br />
+        <span class="muted">&nbsp;&nbsp;&rarr;&nbsp;</span><span class="cmd">17 passed</span> <span class="muted">in</span> 17.1s
+      </p>
+    </section>
+
+    <!-- 9. Saucedemo inventory shot -->
+    <section>
+      <h2>What the bot sees</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        After <code>loginAs("standard")</code> &mdash; 6 products &middot; sort &middot; cart &middot; checkout
+      </p>
+      <div class="center" style="margin-top: 14px;">
+        <div class="shot-frame"><img src="screenshots/08-saucedemo-inventory.png" alt="saucedemo inventory" class="shot" /></div>
+      </div>
+    </section>
+
+    <!-- 10. Hub screenshot: dashboard -->
+    <section>
+      <h2>Hub dashboard</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        Trend chart + stats + run history &mdash; <span class="accent">"เมื่อคืน build เป็นไง"</span> ตอบใน 3 วินาที
+      </p>
+      <div class="center" style="margin-top: 12px;">
+        <div class="shot-frame"><img src="screenshots/01-dashboard.png" alt="hub dashboard" class="shot" /></div>
+      </div>
+    </section>
+
+    <!-- 11. Pipeline -->
+    <section>
+      <h2>Pipeline &mdash; one-click run</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        Stage 5 spawns <code>npx playwright test --grep @smoke</code> &middot; stdout streams via SSE
+      </p>
+      <div class="center" style="margin-top: 12px;">
+        <div class="shot-frame"><img src="screenshots/02-pipeline.png" alt="pipeline" class="shot" /></div>
+      </div>
+    </section>
+
+    <!-- 12. Bug Tracker -->
+    <section>
+      <h2>Bug tracker</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        Aging badges &middot; severity &middot; ผูกกับ release gate (Critical/High open <span class="accent">=</span> NOGO)
+      </p>
+      <div class="center" style="margin-top: 12px;">
+        <div class="shot-frame"><img src="screenshots/03-bugs.png" alt="bug tracker" class="shot" /></div>
+      </div>
+    </section>
+
+    <!-- 13. Release Gate criteria -->
+    <section>
+      <h2>Release gate &mdash; <span class="accent">6 criteria</span></h2>
+      <p class="small muted" style="margin-top: -6px;">
+        <code>release_gate.py</code> ให้ verdict GO / NOGO / NOT_READY <span class="accent">based on evidence</span>, not vibes
+      </p>
+      <div class="grid g-2" style="margin-top: 14px;">
+        <div>
+          <div class="card"><h4><span class="num">01</span> Run scope</h4><p class="small">tag &ge; <code>@e2e</code> หรือ <code>All</code></p></div>
+          <div class="card" style="margin-top:10px;"><h4><span class="num">02</span> Pass rate</h4><p class="small">&ge; 80% (configurable)</p></div>
+          <div class="card" style="margin-top:10px;"><h4><span class="num">03</span> No Critical bugs</h4><p class="small">hard fail</p></div>
+        </div>
+        <div>
+          <div class="card"><h4><span class="num">04</span> No High bugs</h4><p class="small">warn band 1-2</p></div>
+          <div class="card" style="margin-top:10px;"><h4><span class="num">05</span> Screenshots</h4><p class="small"><code>test-results/**/*.png</code></p></div>
+          <div class="card" style="margin-top:10px;"><h4><span class="num">06</span> HTML report</h4><p class="small"><code>playwright-report/index.html</code></p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14. Release gate screenshot -->
+    <section>
+      <h2>Release gate &mdash; verdict</h2>
+      <div class="center" style="margin-top: 12px;">
+        <div class="shot-frame"><img src="screenshots/04-release-gate.png" alt="release gate" class="shot" /></div>
+      </div>
+    </section>
+
+    <!-- 15. Schedule -->
+    <section>
+      <h2>Daily smoke <span class="muted">@</span> 02:00</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        Scheduler thread &middot; daily / weekly / cron &middot; ผลลง run_history เหมือน manual run
+      </p>
+      <div class="center" style="margin-top: 12px;">
+        <div class="shot-frame"><img src="screenshots/05-schedule.png" alt="schedule" class="shot" /></div>
+      </div>
+    </section>
+
+    <!-- 16. User guide -->
+    <section>
+      <h2>Self-documenting &mdash; User Guide</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        Daily route + cycle ในตัว &middot; legacy + Vue v2 sync ทุก feature
+      </p>
+      <div class="center" style="margin-top: 12px;">
+        <div class="shot-frame"><img src="screenshots/06-user-guide.png" alt="user guide" class="shot" /></div>
+      </div>
+    </section>
+
+    <!-- 17. Why JSON -->
+    <section>
+      <h2>Why JSON &mdash; not SQL?</h2>
+      <p class="small muted" style="margin-top: -6px;">
+        Architecturally non-obvious choice &middot; <span class="accent">explicit trade-off</span>
+      </p>
+      <div class="grid g-2" style="margin-top: 16px;">
+        <div class="card">
+          <h4><span class="num">+</span> Auditable</h4>
+          <p class="small">ทุก state change เห็นใน <code>git diff</code></p>
+        </div>
+        <div class="card">
+          <h4><span class="num">+</span> Recoverable</h4>
+          <p class="small">Copy/paste 1 ไฟล์ก็ restore</p>
+        </div>
+        <div class="card">
+          <h4><span class="num">+</span> No migration drama</h4>
+          <p class="small">Schema อยู่ใน code &mdash; ไม่ alter table</p>
+        </div>
+        <div class="card">
+          <h4><span class="num">+</span> Fast enough</h4>
+          <p class="small">Atomic temp+rename &middot; parse &lt; 1 ms (cap 500 entries)</p>
+        </div>
+      </div>
+      <div class="card" style="margin-top: 14px; border-color: rgba(251, 191, 36, 0.3);">
+        <h4 style="color: var(--c-warn);">&minus; Trade-off</h4>
+        <p class="small">ไม่ scale multi-team multi-writer &mdash; swap to Postgres ถ้าทีมโตกว่า ~10 engineers (~1 day work, endpoints unchanged).</p>
+      </div>
+    </section>
+
+    <!-- 18. CI -->
+    <section>
+      <h2>CI &mdash; GitHub Actions</h2>
+      <pre><code class="language-yaml" data-trim data-noescape>
+name: saucedemo-playwright
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/saucedemo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: "npm" }
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: projects/saucedemo/playwright-report/
+      </code></pre>
+    </section>
+
+    <!-- 19. Roadmap -->
+    <section>
+      <h2>What's next</h2>
+      <div class="grid g-2" style="margin-top: 16px;">
+        <div class="card">
+          <h4><span class="num">01</span> Live deployment</h4>
+          <p class="small">Render / Fly.io free tier &mdash; public URL ที่ HR เปิดดูได้ทันที</p>
+        </div>
+        <div class="card">
+          <h4><span class="num">02</span> Mobile viewport</h4>
+          <p class="small"><code>saucedemo-mobile</code> registered as <code>planning</code> &mdash; activate Pixel 7 viewport + visual snapshots</p>
+        </div>
+        <div class="card">
+          <h4><span class="num">03</span> Allure report</h4>
+          <p class="small">แทน pytest-html &mdash; trend ละเอียด + history per test</p>
+        </div>
+        <div class="card">
+          <h4><span class="num">04</span> Slack webhook</h4>
+          <p class="small">Notify เฉพาะ scheduled run ที่ fail (ไม่สแปม manual)</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 20. Thanks -->
+    <section>
+      <div class="hero center">
+        <span class="badge"><span class="dot"></span> Thank you</span>
+        <h1 style="margin: 0.5em 0 0.3em 0;">Let's build <span class="accent">great QA</span> together</h1>
+        <p class="muted" style="font-size: 1em;">
+          <code>./setup.ps1</code> <span class="muted">&rarr;</span> <code>http://localhost:8080</code>
+        </p>
+        <div class="divider"></div>
+        <p class="muted small" style="margin-top: 0;">
+          Repo: <a href="https://github.com/ArtSadVoice/qa-hub-saucedemo">github.com/ArtSadVoice/qa-hub-saucedemo</a>
+        </p>
+        <div style="margin-top: 1.4em;">
+          <span class="chip green">17 tests</span>
+          <span class="chip green">~17 s</span>
+          <span class="chip">100% pass</span>
+          <span class="chip">MIT</span>
+          <span class="chip">CI green</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.0.5/plugin/notes/notes.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: "c/t",
+    transition: "slide",
+    backgroundTransition: "fade",
+    width: 1280,
+    height: 800,
+    margin: 0.06,
+    plugins: [RevealHighlight, RevealNotes],
+  });
+</script>
+
+</body>
+</html>
