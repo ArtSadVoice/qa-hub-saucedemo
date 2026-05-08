@@ -1,0 +1,139 @@
+﻿name: Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    name: pytest (unit + integration)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        # waitress, lxml etc. install anyway — keeps parity with prod env
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-playwright
+
+      - name: Seed mock project folders + config.json
+        # config.json is gitignored (contains local state + secrets), so CI
+        # starts with no projects registered and every release-gate test
+        # would 404. Write a minimal config.json that registers just the
+        # two mock projects the test suite asserts against, and create
+        # their folders at ROOT_DIR (one level up from the repo).
+        run: |
+          cd ..
+          mkdir -p _mock-full/input _mock-full/output _mock-full/tests _mock-full/screenshots _mock-full/playwright-report
+          mkdir -p _mock-manual/input _mock-manual/output _mock-manual/tests _mock-manual/screenshots
+          cd qa-hub-saucedemo
+          cat > config.json <<'EOF'
+          {
+            "_schema_version": 1,
+            "projects": [
+              {"id": "_mock-full",   "name": "_mock-full",   "path": "_mock-full",   "type": "full-pipeline",   "color": "#2E75B6"},
+              {"id": "_mock-manual", "name": "_mock-manual", "path": "_mock-manual", "type": "manual-testing", "color": "#2E75B6"}
+            ]
+          }
+          EOF
+
+      - name: Run unit + integration tests
+        # pytest.ini's addopts = '-m "not e2e"' skips browser tests by default.
+        # E2E is kept local for now — it's flakier in headless CI and the
+        # in-browser smoke is already covered by the live dashboard.
+        run: pytest -v
+
+  vue-build:
+    name: Vue v2 build (frontend/)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+      - name: Lint CSS (color-no-hex guard)
+        # Sprint F / P1.4 — wire the stylelint rule into CI so new hex
+        # literals fail PRs instead of relying on local-run discipline.
+        # color-no-hex was escalated to error in v2.7.0; baseline is 0.
+        working-directory: frontend
+        run: npm run lint:css
+      - name: Type-check + build
+        working-directory: frontend
+        run: npm run build
+      - name: Verify build output exists
+        run: test -f static/dist/index.html && echo "✓ build artefact present"
+
+  structure-check:
+    name: structure-check (lint-ish)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Syntax check — app.py, release_gate.py, migrations.py, validators.py
+        run: |
+          python -m py_compile app.py
+          python -m py_compile release_gate.py
+          python -m py_compile migrations.py
+          python -m py_compile validators.py
+          python -m py_compile scripts/serve_prod.py
+          python -m py_compile scripts/backup.py
+      - name: Validate scaffold templates (structural)
+        # Past incident: a downloaded v2_1 Word template had duplicate
+        # w:styleId + was missing core styles. python-docx accepted it but
+        # Word refused to open the resulting reports. Reject any PR that
+        # lands such a template under scaffold/.
+        run: |
+          python -c "
+          from pathlib import Path
+          from validators import validate_scaffolds
+          errs = validate_scaffolds(Path('scaffold'))
+          if errs:
+              for e in errs:
+                  print(f'  ✗ {e}')
+              raise SystemExit(f'{len(errs)} scaffold template issue(s)')
+          print('OK — every scaffold/<flavor>/templates/Test_Result_Template.docx passes structural lint')
+          "
+      - name: requirements.txt ↔ imports sanity
+        run: |
+          python -c "
+          import ast
+          with open('requirements.txt') as f:
+              reqs = {l.strip().lower() for l in f if l.strip() and not l.startswith('#')}
+          with open('app.py') as f:
+              tree = ast.parse(f.read())
+          third = set()
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Import):
+                  for alias in node.names:
+                      third.add(alias.name.split('.')[0].lower())
+              elif isinstance(node, ast.ImportFrom):
+                  if node.module and node.level == 0:
+                      third.add(node.module.split('.')[0].lower())
+          stdlib = {'sys','io','os','re','json','shutil','threading','time','subprocess','atexit','signal','zipfile','datetime','pathlib','smtplib','email','collections','uuid','socket','webbrowser','argparse','typing','functools','hashlib','base64','urllib','csv','copy','itertools','math','random','string','traceback','warnings','contextlib','logging','sqlite3','queue'}
+          aliases = {'docx': 'python-docx', 'dotenv': 'python-dotenv'}
+          used_pkgs = {aliases.get(p, p) for p in third - stdlib if not p.startswith('_')}
+          local_modules = {'app','release_gate','migrations','validators','scaffold_audit','audit','notifications','flakiness','scripts','ai_provider','flask','jinja2','schemas'}
+          used_pkgs -= local_modules
+          missing = used_pkgs - reqs
+          if missing:
+              raise SystemExit(f'Missing from requirements.txt: {sorted(missing)}')
+          print('OK — every 3rd-party import is in requirements.txt')
+          "

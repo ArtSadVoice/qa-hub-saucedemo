@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# F180 Hub pre-commit hook — P1.5 Sprint F.
+#
+# Runs only when frontend/ files are staged:
+#   1. vue-tsc --noEmit  — catch type errors before they hit CI
+#   2. npm run lint:css  — block hex literals (color-no-hex)
+#
+# Bypass with --no-verify when you really mean it (e.g. mid-refactor commit).
+# Skipped silently if frontend/ has no staged changes — prevents the hook
+# from slowing every backend-only commit.
+#
+# Install: scripts/install-hooks.sh (Linux/macOS) or .ps1 (Windows)
+
+set -e
+
+# Find the repo root regardless of where git was invoked from
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [[ -z "$REPO_ROOT" ]]; then
+  echo "pre-commit: not a git repo, skipping"
+  exit 0
+fi
+
+# Any staged file under frontend/ ?
+staged_frontend=$(git diff --cached --name-only --diff-filter=ACM | grep '^frontend/' || true)
+if [[ -z "$staged_frontend" ]]; then
+  exit 0
+fi
+
+cd "$REPO_ROOT/frontend"
+
+# 1. Type check — fast (~3s)
+if ! npm run type-check --silent; then
+  echo
+  echo "✗ pre-commit: vue-tsc found type errors. Fix them or commit with --no-verify."
+  exit 1
+fi
+
+# 2. Lint CSS — fast (~1s)
+if ! npm run lint:css --silent; then
+  echo
+  echo "✗ pre-commit: stylelint found hex color literals. Use var(--*) tokens"
+  echo "  or add /* stylelint-disable-line color-no-hex */ for intentional cases."
+  echo "  See CHANGELOG v2.7.0 for the cleanup pattern."
+  exit 1
+fi
+
+echo "✓ pre-commit: type + CSS checks passed"

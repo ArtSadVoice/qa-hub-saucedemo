@@ -1,0 +1,20 @@
+{
+  "name": "saucedemo-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Playwright TS test suite for https://www.saucedemo.com — registered with QA Hub Demo as a playwright-only project.",
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:e2e": "playwright test --grep @e2e",
+    "test:regression": "playwright test --grep @regression",
+    "test:visual": "playwright test --grep @visual",
+    "test:headed": "playwright test --headed --workers=1",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.0"
+  }
+}

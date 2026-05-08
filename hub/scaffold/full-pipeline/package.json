@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "test":        "npx playwright test",
+    "test:smoke":  "npx playwright test --grep @smoke",
+    "test:e2e":    "npx playwright test --grep @e2e",
+    "test:headed": "npx playwright test --headed",
+    "test:report": "npx playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.5.0"
+  }
+}

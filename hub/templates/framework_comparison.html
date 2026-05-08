@@ -1,0 +1,235 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Vue 3 vs React 19 — Side by Side | QA Hub Demo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F0F4F8; color: #1A2332; padding: 16px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .sub { color: #6B7C93; font-size: 13px; margin-bottom: 18px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 1600px; margin: 0 auto; }
+  .pane { background: #fff; border: 1px solid #DDE3EC; border-radius: 10px; padding: 12px; }
+  .pane h2 { font-size: 14px; font-weight: 700; padding: 6px 10px; border-radius: 8px; display: inline-flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .vue h2 { background: #DCFCE7; color: #14532d; }
+  .react h2 { background: #DBEAFE; color: #1e3a8a; }
+  iframe { width: 100%; height: 720px; border: 1px solid #DDE3EC; border-radius: 8px; background: #F0F4F8; }
+  .footer { max-width: 1600px; margin: 22px auto; background: #fff; border: 1px solid #DDE3EC; border-radius: 10px; padding: 18px 22px; }
+  .footer h3 { font-size: 15px; color: #1F3864; margin-bottom: 12px; }
+  .code-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; margin-bottom: 22px; }
+  .code-block { background: #0d1117; color: #c9d1d9; padding: 12px 14px; border-radius: 8px; font-family: 'Cascadia Mono', 'Consolas', monospace; font-size: 12px; line-height: 1.55; overflow-x: auto; white-space: pre; }
+  .code-block .label { display: block; color: #58a6ff; margin-bottom: 6px; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  table.cmp { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
+  table.cmp th, table.cmp td { padding: 8px 10px; border: 1px solid #DDE3EC; text-align: left; vertical-align: top; }
+  table.cmp th { background: #F7FAFF; font-size: 12px; }
+  table.cmp .vue-cell { background: #F0FDF4; }
+  table.cmp .react-cell { background: #EFF6FF; }
+  .verdict { background: linear-gradient(135deg, #DCFCE7 0%, #BBF7D0 100%); border-left: 4px solid #14532d; padding: 12px 16px; border-radius: 6px; margin-top: 14px; }
+  .verdict b { color: #14532d; }
+</style>
+</head>
+<body>
+
+<h1>Vue 3 vs React 19 — Side by Side PoC</h1>
+<p class="sub">เดียวกัน feature (Bug Tracker), เดียวกัน backend (<code>/api/bugs?p=_mock-full</code>), 2 frameworks</p>
+
+<div class="row">
+  <div class="pane vue">
+    <h2>🟢 Vue 3</h2>
+    <iframe src="/vue-demo" title="Vue 3 demo"></iframe>
+  </div>
+  <div class="pane react">
+    <h2>⚛️ React 19</h2>
+    <iframe src="/react-demo" title="React 19 demo"></iframe>
+  </div>
+</div>
+
+<div class="footer">
+  <h3>Code Comparison — same 5 patterns, side by side</h3>
+
+  <h4 style="font-size:13px;margin-top:10px;color:#6B7C93">1. Component scaffold</h4>
+  <div class="code-row">
+<div class="code-block"><span class="label">Vue 3 (Options API)</span>const App = {
+  data() {
+    return { bugs: [], filter: '' };
+  },
+  computed: {
+    filteredBugs() {
+      return this.filter
+        ? this.bugs.filter(b =&gt; b.severity === this.filter)
+        : this.bugs;
+    },
+  },
+  methods: {
+    async loadBugs() { /* ... */ },
+  },
+  mounted() { this.loadBugs(); },
+};
+Vue.createApp(App).mount('#app');</div>
+<div class="code-block"><span class="label">React 19 (hooks)</span>function App() {
+  const [bugs, setBugs] = useState([]);
+  const [filter, setFilter] = useState('');
+
+  const filteredBugs = useMemo(
+    () =&gt; filter
+      ? bugs.filter(b =&gt; b.severity === filter)
+      : bugs,
+    [bugs, filter]
+  );
+
+  useEffect(() =&gt; { loadBugs(); }, []);
+  // ...
+}
+ReactDOM.createRoot(el).render(&lt;App /&gt;);</div>
+  </div>
+
+  <h4 style="font-size:13px;color:#6B7C93">2. Two-way binding (form input)</h4>
+  <div class="code-row">
+<div class="code-block"><span class="label">Vue 3 — v-model</span>&lt;input v-model="form.title"&gt;</div>
+<div class="code-block"><span class="label">React 19 — controlled input</span>&lt;input
+  value={form.title}
+  onChange={e =&gt; setForm({ ...form, title: e.target.value })}
+/&gt;</div>
+  </div>
+
+  <h4 style="font-size:13px;color:#6B7C93">3. List rendering with key</h4>
+  <div class="code-row">
+<div class="code-block"><span class="label">Vue 3</span>&lt;tr v-for="(b, i) in filteredBugs" :key="b.id"&gt;
+  &lt;td&gt;{{ i + 1 }}&lt;/td&gt;
+  &lt;td&gt;&lt;b&gt;{{ b.title }}&lt;/b&gt;&lt;/td&gt;
+&lt;/tr&gt;</div>
+<div class="code-block"><span class="label">React 19</span>{filteredBugs.map((b, i) =&gt; (
+  &lt;tr key={b.id}&gt;
+    &lt;td&gt;{i + 1}&lt;/td&gt;
+    &lt;td&gt;&lt;b&gt;{b.title}&lt;/b&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+))}</div>
+  </div>
+
+  <h4 style="font-size:13px;color:#6B7C93">4. Conditional render</h4>
+  <div class="code-row">
+<div class="code-block"><span class="label">Vue 3 — v-if / v-else-if / v-else</span>&lt;div v-if="loading"&gt;Loading…&lt;/div&gt;
+&lt;div v-else-if="!filteredBugs.length"&gt;No bugs.&lt;/div&gt;
+&lt;table v-else&gt; ... &lt;/table&gt;</div>
+<div class="code-block"><span class="label">React 19 — ternary chain</span>{loading ? (
+  &lt;div&gt;Loading…&lt;/div&gt;
+) : filteredBugs.length === 0 ? (
+  &lt;div&gt;No bugs.&lt;/div&gt;
+) : (
+  &lt;table&gt; ... &lt;/table&gt;
+)}</div>
+  </div>
+
+  <h4 style="font-size:13px;color:#6B7C93">5. Dynamic class binding</h4>
+  <div class="code-row">
+<div class="code-block"><span class="label">Vue 3 — :class binding</span>&lt;span
+  class="sev"
+  :class="b.severity"
+&gt;{{ b.severity }}&lt;/span&gt;</div>
+<div class="code-block"><span class="label">React 19 — template string</span>&lt;span
+  className={`sev ${b.severity}`}
+&gt;{b.severity}&lt;/span&gt;</div>
+  </div>
+
+  <h3 style="margin-top:20px">Quantitative comparison (this exact PoC)</h3>
+  <table class="cmp">
+    <tr>
+      <th></th>
+      <th class="vue-cell">Vue 3</th>
+      <th class="react-cell">React 19</th>
+    </tr>
+    <tr>
+      <td><b>Total file size</b></td>
+      <td class="vue-cell">~6.4 KB (HTML+CSS+JS)</td>
+      <td class="react-cell">~7.8 KB (more boilerplate)</td>
+    </tr>
+    <tr>
+      <td><b>JS for the same component</b></td>
+      <td class="vue-cell">~70 lines</td>
+      <td class="react-cell">~95 lines (~35% more)</td>
+    </tr>
+    <tr>
+      <td><b>Bundle from CDN</b></td>
+      <td class="vue-cell">vue.global.prod.js — 1 file (~98 KB)</td>
+      <td class="react-cell">react + react-dom + babel — 3 files (~1.2 MB with babel)*</td>
+    </tr>
+    <tr>
+      <td><b>Form input (10 fields)</b></td>
+      <td class="vue-cell">10 lines</td>
+      <td class="react-cell">10 inputs × 2 lines = 20 lines</td>
+    </tr>
+    <tr>
+      <td><b>Reactivity model</b></td>
+      <td class="vue-cell">Auto — change <code>this.x</code></td>
+      <td class="react-cell">Explicit — call <code>setX</code></td>
+    </tr>
+    <tr>
+      <td><b>State sharing across components</b></td>
+      <td class="vue-cell">Pinia (built-in pattern)</td>
+      <td class="react-cell">Choose: Zustand / Redux / Context / Jotai / etc.</td>
+    </tr>
+    <tr>
+      <td><b>Effect dependencies</b></td>
+      <td class="vue-cell">Auto-tracked (computed)</td>
+      <td class="react-cell">Manual (useMemo deps array)</td>
+    </tr>
+    <tr>
+      <td><b>Memoization required to perform?</b></td>
+      <td class="vue-cell">No — only when profiling shows hot spot</td>
+      <td class="react-cell">Often — useMemo / useCallback / React.memo</td>
+    </tr>
+  </table>
+  <p style="font-size:11px;color:#6B7C93;margin-top:6px">* In production with Vite build, both end up similar (~150 KB gzipped). Difference here is CDN-only with Babel-in-browser.</p>
+
+  <h3 style="margin-top:20px">Qualitative — for Hub specifically</h3>
+  <table class="cmp">
+    <tr><th>Dimension</th><th class="vue-cell">Vue 3</th><th class="react-cell">React 19</th></tr>
+    <tr>
+      <td>Match for Hub's vanilla HTML mental model</td>
+      <td class="vue-cell">✅ Template syntax extends HTML</td>
+      <td class="react-cell">⚠️ JSX is JS-first, mixed feeling</td>
+    </tr>
+    <tr>
+      <td>Form-heavy CRUD (Hub's main pattern)</td>
+      <td class="vue-cell">✅ v-model halves the boilerplate</td>
+      <td class="react-cell">⚠️ Controlled inputs everywhere</td>
+    </tr>
+    <tr>
+      <td>QA team learning curve</td>
+      <td class="vue-cell">✅ Faster — looks like HTML</td>
+      <td class="react-cell">⚠️ Steeper — JSX + hooks rules</td>
+    </tr>
+    <tr>
+      <td>Decision count to start</td>
+      <td class="vue-cell">✅ Vue + Vite + Pinia (3)</td>
+      <td class="react-cell">⚠️ React + Vite + state + router + query (5–6)</td>
+    </tr>
+    <tr>
+      <td>Hiring market (if team grows)</td>
+      <td class="vue-cell">⚠️ Smaller</td>
+      <td class="react-cell">✅ Larger</td>
+    </tr>
+    <tr>
+      <td>Component library ecosystem</td>
+      <td class="vue-cell">⚠️ Adequate (Naive UI, Element)</td>
+      <td class="react-cell">✅ Best in class (shadcn, MUI, Ant)</td>
+    </tr>
+    <tr>
+      <td>Bundle size</td>
+      <td class="vue-cell">✅ Slightly smaller</td>
+      <td class="react-cell">⚠️ Slightly larger (negligible at this scale)</td>
+    </tr>
+  </table>
+
+  <div class="verdict">
+    <b>Verdict for QA Hub Demo:</b> Vue 3 wins 5 of the 7 dimensions that matter most given (a) the
+    vanilla-HTML legacy pattern, (b) form-heavy CRUD nature, and (c) solo-to-small-QA-team trajectory.
+    React's win on hiring + ecosystem is real but matters more for product teams larger than yours.
+    <br><br>
+    Try both demos above for ~10 minutes, pay attention to <em>which one you'd rather edit</em>,
+    and trust that judgement over any rule of thumb.
+  </div>
+</div>
+
+</body>
+</html>

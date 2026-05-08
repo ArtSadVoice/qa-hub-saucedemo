@@ -1,0 +1,113 @@
+# App Architecture Document
+# [PROJECT_NAME]
+# สำหรับใช้กับ Claude Code + Playwright Testing
+
+---
+
+## 1. App Overview
+
+**ชื่อ app**: [PROJECT_NAME]
+**เป้าหมาย**: [อธิบาย 1-2 บรรทัด]
+**Tech Stack**: [กรอก stack]
+
+---
+
+## 2. URL Structure (Route Map)
+
+```
+/ ─────────────── [ชื่อหน้า] (public)
+├── /login ──── Login page
+├── /register
+├── /dashboard  ← requires login
+│   └── /dashboard/[section]
+└── /admin      ← requires admin
+    ├── /admin/[resource]
+    └── /admin/[resource]/[id]
+```
+
+---
+
+## 3. User Roles & Access Control
+
+| Role    | สร้างอย่างไร | เข้าถึงได้ | Redirect ถ้าไม่มีสิทธิ์ |
+|---------|-------------|-----------|----------------------|
+| guest   |             |           |                      |
+| user    |             |           |                      |
+| admin   |             |           |                      |
+
+---
+
+## 4. Core User Flows
+
+### Flow A: [ชื่อ flow หลัก]
+```
+1.
+2.
+3. → ผลลัพธ์ (URL, message)
+```
+
+### Flow B: [ชื่อ flow]
+```
+1.
+2.
+3. → ผลลัพธ์
+```
+
+---
+
+## 5. Key UI Behaviors
+
+- **Form validation**: onBlur / onSubmit
+- **Error display**: inline / toast / modal
+- **Loading states**: skeleton / spinner / disabled button
+- **Modal animation**: [กี่ ms]
+- **Toast duration**: [กี่วินาที]
+
+---
+
+## 6. API Endpoints (หลัก)
+
+```
+GET  /api/[resource]         ← list
+GET  /api/[resource]/[id]    ← detail
+POST /api/[resource]         ← create
+PATCH /api/[resource]/[id]   ← update
+DELETE /api/[resource]/[id]  ← delete
+```
+
+---
+
+## 7. Error States ที่ต้อง Test
+
+| Scenario | Expected Behavior |
+|----------|------------------|
+| Login ผิด credentials | Error "..." |
+| เข้าหน้าที่ไม่มีสิทธิ์ | Redirect ไป... |
+| Network error | Toast "..." |
+| Session หมดอายุ | Modal "..." |
+
+---
+
+## 8. Test Data
+
+### Test Accounts
+```
+TEST_USER_EMAIL=
+TEST_USER_PASSWORD=
+TEST_ADMIN_EMAIL=
+TEST_ADMIN_PASSWORD=
+```
+
+### Seed Data
+| ประเภท | รายละเอียด |
+|--------|-----------|
+|        |           |
+
+---
+
+## 9. สิ่งที่ไม่ควร Test ผ่าน Playwright
+
+- Email delivery → ใช้ unit test
+- Payment webhook → ใช้ CLI tool ของ provider
+- Performance → ใช้ k6
+- Mobile native → ใช้ Detox/Appium

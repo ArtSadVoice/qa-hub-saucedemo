@@ -1,0 +1,41 @@
+{
+  "_schema_version": 1,
+  "projects": [
+    {
+      "id": "saucedemo-e2e",
+      "name": "Saucedemo / E2E Suite",
+      "path": "projects/saucedemo",
+      "type": "playwright-only",
+      "color": "#42A5F5",
+      "company": "Saucedemo",
+      "category": "E2E",
+      "phase": "active"
+    },
+    {
+      "id": "saucedemo-mobile",
+      "name": "Saucedemo / Mobile Viewports",
+      "path": "projects/saucedemo",
+      "type": "playwright-only",
+      "color": "#7E57C2",
+      "company": "Saucedemo",
+      "category": "Visual",
+      "phase": "planning"
+    }
+  ],
+  "email": {
+    "smtp_host": "",
+    "smtp_port": 587,
+    "smtp_user": "",
+    "smtp_pass": "",
+    "sender_name": "QA Hub Demo",
+    "to": [],
+    "cc": [],
+    "subject_template": "[{result}] Saucedemo report"
+  },
+  "notifications": {
+    "slack_webhook": "",
+    "teams_webhook": "",
+    "discord_webhook": "",
+    "notify_on": ["fail", "error"]
+  }
+}

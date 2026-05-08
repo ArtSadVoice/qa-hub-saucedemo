@@ -1,0 +1,44 @@
+[
+  {
+    "id": "BUG-001",
+    "title": "problem_user inventory shows the same dog photo for every item",
+    "description": "When logged in as `problem_user`, the inventory page renders all six product images as the dog placeholder instead of the real product photo. Reproducible 100% on chromium + firefox. Likely backend bug — verified in saucedemo's documentation as an intentional regression scenario, captured here for traceability.",
+    "severity": "Medium",
+    "status": "Open",
+    "assignee": "Demo QA",
+    "createdAt": "2026-04-29 11:42:31",
+    "tcid": "TS_06_01"
+  },
+  {
+    "id": "BUG-002",
+    "title": "Sort dropdown z-index lower than burger menu overlay",
+    "description": "When the burger menu is open (left sidebar) and the user clicks the sort dropdown without closing the menu first, the dropdown options render BEHIND the menu overlay on viewport widths > 1280px. Workaround: close menu before sorting. Cosmetic — does not block functionality.",
+    "severity": "Low",
+    "status": "Open",
+    "assignee": "",
+    "createdAt": "2026-05-01 16:09:54",
+    "tcid": "TS_02_03"
+  },
+  {
+    "id": "BUG-003",
+    "title": "Cart badge briefly flashes wrong count when adding multiple items rapidly",
+    "description": "Adding two items in quick succession (< 100ms apart) shows the badge incrementing 1 → 2 → 1 → 2 before settling. Race condition in the React state update. Not user-visible at normal click speed; only triggers under automation.",
+    "severity": "Low",
+    "status": "Fixed",
+    "assignee": "Frontend Dev",
+    "createdAt": "2026-04-26 09:14:03",
+    "fixedAt": "2026-04-30 16:48:12",
+    "tcid": "TS_03_02"
+  },
+  {
+    "id": "BUG-004",
+    "title": "performance_glitch_user breaks the daily smoke schedule (>3 min)",
+    "description": "Login as performance_glitch_user takes 4-7 seconds, plus subsequent navigation. Three consecutive scheduled runs that hit this user expired the 3-minute SLA on the smoke schedule and surfaced as red on the dashboard. Mitigation: keep performance_glitch_user out of the smoke tag — it belongs in regression.",
+    "severity": "High",
+    "status": "Closed",
+    "assignee": "QA",
+    "createdAt": "2026-04-26 02:00:22",
+    "fixedAt": "2026-04-26 08:30:00",
+    "tcid": ""
+  }
+]

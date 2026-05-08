@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#F0F4F8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F0F4F8;padding:32px 0">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08)">
+
+  <!-- Header -->
+  <tr><td style="background:#1A2332;padding:28px 32px">
+    <p style="margin:0;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.08em;text-transform:uppercase">F180 QA HUB &nbsp;&middot;&nbsp; Manual Testing</p>
+    <h1 style="margin:6px 0 0;font-size:22px;font-weight:700;color:#fff">{{ project_name }}</h1>
+    <p style="margin:6px 0 0;font-size:13px;color:rgba(255,255,255,.55)">UAT Test Report &nbsp;&middot;&nbsp; {{ date }}</p>
+  </td></tr>
+
+  <!-- Result banner -->
+  <tr><td style="background:{{ banner_bg }};padding:16px 32px;border-bottom:3px solid {{ banner_color }}">
+    <p style="margin:0;font-size:19px;font-weight:800;color:{{ banner_color }}">{{ result_icon }} &nbsp;{{ result_label }}</p>
+    <p style="margin:4px 0 0;font-size:13px;color:{{ banner_color }}">
+      Pass Rate: <b>{{ pass_rate }}%</b> &nbsp;&middot;&nbsp; {{ pass_count }} passed &nbsp;&middot;&nbsp; {{ fail_count }} failed &nbsp;&middot;&nbsp; {{ not_start_count }} not started
+    </p>
+  </td></tr>
+
+  <!-- Body -->
+  <tr><td style="padding:28px 32px">
+
+    <p style="margin:0 0 6px;font-size:14px;color:#1A2332">{{ greeting }}</p>
+    <p style="margin:0 0 24px;font-size:14px;color:#4A5568;line-height:1.7">
+      {{ intro_text }}
+    </p>
+
+    <!-- Stats cards -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
+      <tr>
+        <td style="padding:14px 8px;background:#F7FAFF;border-radius:8px;text-align:center">
+          <p style="margin:0;font-size:26px;font-weight:800;color:#1A2332">{{ total }}</p>
+          <p style="margin:4px 0 0;font-size:10px;color:#6B7C93;font-weight:700;text-transform:uppercase">Total TCs</p>
+        </td><td width="6"></td>
+        <td style="padding:14px 8px;background:#E8F5E9;border-radius:8px;text-align:center">
+          <p style="margin:0;font-size:26px;font-weight:800;color:#2E7D32">{{ pass_count }}</p>
+          <p style="margin:4px 0 0;font-size:10px;color:#2E7D32;font-weight:700;text-transform:uppercase">Pass</p>
+        </td><td width="6"></td>
+        <td style="padding:14px 8px;background:#FFEBEE;border-radius:8px;text-align:center">
+          <p style="margin:0;font-size:26px;font-weight:800;color:#C62828">{{ fail_count }}</p>
+          <p style="margin:4px 0 0;font-size:10px;color:#C62828;font-weight:700;text-transform:uppercase">Fail</p>
+        </td><td width="6"></td>
+        <td style="padding:14px 8px;background:#FFF8E1;border-radius:8px;text-align:center">
+          <p style="margin:0;font-size:26px;font-weight:800;color:#F57F17">{{ not_start_count }}</p>
+          <p style="margin:4px 0 0;font-size:10px;color:#F57F17;font-weight:700;text-transform:uppercase">Not Start</p>
+        </td><td width="6"></td>
+        <td style="padding:14px 8px;background:{{ rate_bg }};border-radius:8px;text-align:center">
+          <p style="margin:0;font-size:26px;font-weight:800;color:{{ rate_color }}">{{ pass_rate }}%</p>
+          <p style="margin:4px 0 0;font-size:10px;color:{{ rate_color }};font-weight:700;text-transform:uppercase">Pass Rate</p>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Suite summary -->
+    <h3 style="margin:0 0 8px;font-size:12px;font-weight:700;color:#1A2332;text-transform:uppercase;letter-spacing:.05em">{{ suite_title }}</h3>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px">
+      <thead><tr style="background:#F7FAFF">
+        <th style="padding:8px 10px;text-align:left;font-size:11px;color:#6B7C93;font-weight:700;border-bottom:2px solid #DDE3EC;width:70px">Suite</th>
+        <th style="padding:8px 10px;text-align:left;font-size:11px;color:#6B7C93;font-weight:700;border-bottom:2px solid #DDE3EC">Description</th>
+        <th style="padding:8px 10px;text-align:center;font-size:11px;color:#6B7C93;font-weight:700;border-bottom:2px solid #DDE3EC;width:45px">Total</th>
+        <th style="padding:8px 10px;text-align:center;font-size:11px;color:#2E7D32;font-weight:700;border-bottom:2px solid #DDE3EC;width:45px">Pass</th>
+        <th style="padding:8px 10px;text-align:center;font-size:11px;color:#C62828;font-weight:700;border-bottom:2px solid #DDE3EC;width:45px">Fail</th>
+        <th style="padding:8px 10px;text-align:center;font-size:11px;color:#F57F17;font-weight:700;border-bottom:2px solid #DDE3EC;width:45px">N/S</th>
+        <th style="padding:8px 10px;text-align:center;font-size:11px;color:#6B7C93;font-weight:700;border-bottom:2px solid #DDE3EC;width:55px">Rate</th>
+      </tr></thead>
+      <tbody>
+      {% for s in suites %}
+        <tr{% if s.fail > 0 %} style="background:#FFFDE7"{% endif %}>
+          <td style="padding:8px 10px;border-bottom:1px solid #F0F4F8;font-size:12px;font-weight:700;color:#1A2332">{{ s.id }}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #F0F4F8;font-size:12px;color:#4A5568">{{ s.desc }}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #F0F4F8;font-size:12px;text-align:center;font-weight:700">{{ s.total }}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #F0F4F8;font-size:12px;text-align:center;color:#2E7D32;font-weight:700">{{ s.pass }}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #F0F4F8;font-size:12px;text-align:center;color:#C62828;font-weight:700">{{ s.fail or '—' }}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #F0F4F8;font-size:12px;text-align:center;color:#F57F17">{{ s.not_start or '—' }}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #F0F4F8;font-size:12px;text-align:center;font-weight:700;color:{% if s.rate and s.rate >= 80 %}#2E7D32{% else %}#E65100{% endif %}">{{ '%d%%' % s.rate if s.rate is not none else '—' }}</td>
+        </tr>
+      {% endfor %}
+        <tr style="background:#F7FAFF">
+          <td colspan="2" style="padding:9px 10px;font-size:12px;font-weight:700;color:#1A2332">Total</td>
+          <td style="padding:9px 10px;font-size:12px;font-weight:700;text-align:center">{{ total }}</td>
+          <td style="padding:9px 10px;font-size:12px;font-weight:700;text-align:center;color:#2E7D32">{{ pass_count }}</td>
+          <td style="padding:9px 10px;font-size:12px;font-weight:700;text-align:center;color:#C62828">{{ fail_count or '—' }}</td>
+          <td style="padding:9px 10px;font-size:12px;font-weight:700;text-align:center;color:#F57F17">{{ not_start_count or '—' }}</td>
+          <td style="padding:9px 10px;font-size:12px;font-weight:700;text-align:center;color:{{ rate_color }}">{{ pass_rate }}%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Failed TCs -->
+    {% if failed_tcs %}
+    <div style="background:#FFF5F5;border:1px solid #FFCDD2;border-radius:8px;padding:14px 16px;margin-bottom:20px">
+      <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#B71C1C">{{ failed_tcs_title }}</p>
+      <table width="100%" cellpadding="0" cellspacing="0">
+      {% for t in failed_tcs[:10] %}
+        <tr>
+          <td style="font-size:12px;color:#4A5568;padding:3px 0"><b>{{ t.id }}</b> &nbsp;&middot;&nbsp; {{ t.name }}</td>
+          <td style="font-size:11px;color:#B71C1C;text-align:right;white-space:nowrap">{{ t.tsid }}</td>
+        </tr>
+      {% endfor %}
+      </table>
+      {% if failed_tcs|length > 10 %}
+      <p style="margin:8px 0 0;font-size:11px;color:#6B7C93">... and {{ failed_tcs|length - 10 }} more</p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Open bugs -->
+    {% if open_bugs %}
+    <h3 style="margin:24px 0 8px;font-size:12px;font-weight:700;color:#1A2332;text-transform:uppercase;letter-spacing:.05em">{{ bugs_title }}</h3>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:8px">
+      <thead><tr style="background:#FFF5F5">
+        <th style="padding:7px 10px;text-align:left;font-size:11px;color:#B71C1C;font-weight:700;border-bottom:2px solid #FFCDD2;width:90px">Bug ID</th>
+        <th style="padding:7px 10px;text-align:left;font-size:11px;color:#B71C1C;font-weight:700;border-bottom:2px solid #FFCDD2">Title</th>
+        <th style="padding:7px 10px;text-align:center;font-size:11px;color:#B71C1C;font-weight:700;border-bottom:2px solid #FFCDD2;width:80px">Severity</th>
+      </tr></thead>
+      <tbody>
+      {% for b in open_bugs[:10] %}
+        <tr>
+          <td style="padding:7px 10px;border-bottom:1px solid #F0F4F8;font-size:12px;font-weight:700;color:#1A2332">{{ b.id }}</td>
+          <td style="padding:7px 10px;border-bottom:1px solid #F0F4F8;font-size:12px;color:#4A5568">{{ b.title }}</td>
+          <td style="padding:7px 10px;border-bottom:1px solid #F0F4F8;text-align:center">
+            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px">{{ b.severity }}</span>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- Attachment note -->
+    <div style="margin-top:24px;padding:14px 18px;background:#F7FAFF;border-left:4px solid #2E75B6;border-radius:0 8px 8px 0">
+      <p style="margin:0;font-size:13px;color:#1A2332">{{ attachment_note }}</p>
+      <p style="margin:4px 0 0;font-size:12px;color:#6B7C93">Word report with manual test case details</p>
+    </div>
+
+  </td></tr>
+
+  <!-- Footer -->
+  <tr><td style="background:#F7FAFF;padding:18px 32px;border-top:1px solid #DDE3EC">
+    <p style="margin:0;font-size:11px;color:#6B7C93">{{ footer_text }}</p>
+    <p style="margin:4px 0 0;font-size:11px;color:#6B7C93">{{ footer_contact }}</p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body></html>

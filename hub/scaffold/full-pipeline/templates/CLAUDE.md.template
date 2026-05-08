@@ -1,0 +1,164 @@
+# CLAUDE.md — [PROJECT_NAME]
+
+> อ่านไฟล์นี้ก่อนทำทุกครั้ง — บอก Claude Code ว่า project นี้คืออะไรและต้องทำอะไร
+
+---
+
+## Project Overview
+
+**App name**: [PROJECT_NAME]
+**Stack**: [STACK — เช่น Next.js 14, React, Vue 3, Laravel ฯลฯ]
+**Auth**: [AUTH_METHOD — เช่น NextAuth, JWT, Session]
+**Test framework**: Playwright 1.x + TypeScript
+**Base URL (dev)**: [BASE_URL — เช่น http://localhost:3000]
+
+---
+
+## Quick Start
+
+```bash
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev        # [BASE_URL]
+
+# Run all tests
+npx playwright test
+
+# Run with UI mode
+npx playwright test --ui
+
+# Run specific file
+npx playwright test tests/e2e/[feature].spec.ts
+```
+
+---
+
+## Project Structure
+
+```
+project-root/
+├── CLAUDE.md                    ← ไฟล์นี้
+├── APP_ARCHITECTURE.md          ← โครงสร้าง app, URL map, user flows
+├── playwright.config.ts
+├── agents/                      ← AI Agent system prompts
+│   ├── ba_agent.md
+│   ├── qa_agent.md
+│   └── playwright_agent.md
+├── scripts/
+│   ├── orchestrator.py          ← Main agentic pipeline
+│   ├── screenshot_injector.py   ← Auto-inject screenshots → Word
+│   ├── generate_report.py       ← Generate Word from Excel
+│   └── run.py                   ← One-shot generate
+├── tests/e2e/                   ← Playwright spec files
+├── screenshots/                 ← [TCID].png files
+├── input/                       ← TCM Excel files
+├── output/                      ← Word report files
+└── logs/                        ← Agent logs + JSON
+```
+
+---
+
+## User Roles
+
+| Role    | สามารถทำ |
+|---------|---------|
+| guest   | [กรอกสิ่งที่ guest ทำได้] |
+| user    | [กรอกสิ่งที่ user ทำได้] |
+| admin   | [กรอกสิ่งที่ admin ทำได้] |
+
+---
+
+## URL Structure
+
+```
+/ ────────── [ชื่อหน้า] (public/protected)
+├── /login
+├── /register
+├── /dashboard    ← requires login
+├── /admin        ← requires admin role
+└── [เพิ่ม URL อื่นๆ]
+```
+
+---
+
+## Selector Strategy
+
+1. `getByRole('button', { name: '...' })`
+2. `getByTestId('data-testid-value')`
+3. `getByLabel('label text')`
+4. `getByText('visible text')`
+
+**ห้ามใช้**: CSS class (`.btn-primary`), XPath (`//button`)
+
+---
+
+## Key `data-testid` Attributes
+
+| Element              | data-testid          |
+|----------------------|----------------------|
+| [กรอก element หลัก]  | [กรอก testid]        |
+
+---
+
+## Test Scenarios
+
+| TSID  | Scenario         | จำนวน TC |
+|-------|-----------------|----------|
+| TS_01 | [กรอก scenario] | [จำนวน]  |
+| TS_02 | [กรอก scenario] | [จำนวน]  |
+| **TOTAL** |             | **[รวม]** |
+
+---
+
+## Environment
+
+```bash
+# .env.test
+BASE_URL=[BASE_URL]
+TEST_USER_EMAIL=testuser@[domain]
+TEST_USER_PASSWORD=TestPass123!
+TEST_ADMIN_EMAIL=testadmin@[domain]
+TEST_ADMIN_PASSWORD=AdminPass123!
+```
+
+---
+
+## Known Issues / Edge Cases
+
+| Issue | Description | Workaround |
+|-------|-------------|------------|
+| [กรอกถ้ามี] | | |
+
+---
+
+## Agentic Pipeline Commands
+
+```bash
+# Full pipeline: requirement → TCM → Playwright → Word
+python scripts/orchestrator.py --input "requirement.md"
+
+# Figma input
+python scripts/orchestrator.py --figma-image "screen.png"
+
+# TCM only (ไม่รัน Playwright)
+python scripts/orchestrator.py --input "requirement.md" --skip-playwright
+
+# Inject screenshots อย่างเดียว
+python scripts/screenshot_injector.py
+
+# Dry-run
+python scripts/screenshot_injector.py --dry-run
+```
+
+---
+
+## กฎที่ต้องปฏิบัติเสมอ
+
+1. อ่าน CLAUDE.md ก่อนทำทุกครั้ง
+2. อ่าน APP_ARCHITECTURE.md ก่อนเขียน test
+3. ไม่ใช้ CSS class หรือ XPath เป็น selector
+4. Backup ก่อน overwrite ไฟล์ output
+5. Confidence gate: ถ้า BA confidence < 0.7 ให้ถามก่อน
+6. Screenshot ตั้งชื่อตาม TCID: `TS_01_01.png`

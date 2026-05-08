@@ -1,0 +1,17 @@
+[Unit]
+Description=F180 Hub — Central QA Dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=f180hub
+WorkingDirectory=/opt/feedback180-hub
+Environment="HUB_SMTP_PASS=<set-via-systemd-edit>"
+ExecStart=/usr/bin/python3 scripts/serve_prod.py --host 127.0.0.1 --port 8080
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/var/log/f180-hub/stdout.log
+StandardError=append:/var/log/f180-hub/stderr.log
+
+[Install]
+WantedBy=multi-user.target

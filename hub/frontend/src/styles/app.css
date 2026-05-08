@@ -1,0 +1,337 @@
+/* ──────────────────────────────────────────────────────────
+   F180 Hub v2 — Apple-style modern theme
+   Typography · spacing · shadows tuned for clarity + calm
+   ────────────────────────────────────────────────────────── */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Color palette — Apple-inspired */
+  --primary: #0071E3;
+  --primary-dk: #0062C4;
+  --primary-soft: #E8F2FE;
+  --success: #34C759;
+  --success-soft: #E5F8EA;
+  --danger: #FF3B30;
+  --danger-soft: #FFEBE9;
+  --warn: #FF9F0A;
+  --warn-soft: #FFF4E5;
+  --bg: #F5F5F7;
+  --card: #FFFFFF;
+  --card-2: #FAFAFC;
+  --text: #1D1D1F;
+  --text-secondary: #424248;
+  --muted: #6E6E73;
+  --border: #D2D2D7;
+  --border-soft: #E5E5EA;
+  --table-header-bg: #F5F5F7;
+  --row-hover: #FAFAFC;
+  --code-bg: rgba(0, 0, 0, 0.04);
+
+  /* Shadows — soft layered like macOS */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.18), 0 8px 16px rgba(0, 0, 0, 0.08);
+
+  /* Spacing scale */
+  --space-1: 4px;  --space-2: 8px;   --space-3: 12px;
+  --space-4: 16px; --space-5: 20px;  --space-6: 24px;
+  --space-8: 32px; --space-10: 40px;
+
+  /* Border radius */
+  --radius-xs: 4px; --radius-sm: 6px; --radius-md: 10px;
+  --radius-lg: 14px; --radius-xl: 20px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration: 220ms;
+  --duration-slow: 320ms;
+}
+
+/* Dark mode — Apple Dark Mode palette */
+[data-theme="dark"] {
+  --primary: #0A84FF;
+  --primary-dk: #007AFF;
+  --primary-soft: rgba(10, 132, 255, 0.15);
+  --success: #30D158;
+  --success-soft: rgba(48, 209, 88, 0.15);
+  --danger: #FF453A;
+  --danger-soft: rgba(255, 69, 58, 0.15);
+  --warn: #FF9F0A;
+  --warn-soft: rgba(255, 159, 10, 0.15);
+  --bg: #000000;
+  --card: #1C1C1E;
+  --card-2: #2C2C2E;
+  --text: #F5F5F7;
+  --text-secondary: #C7C7CC;
+  --muted: #98989D;
+  --border: #38383A;
+  --border-soft: #2C2C2E;
+  --table-header-bg: #1C1C1E;
+  --row-hover: #2C2C2E;
+  --code-bg: rgba(255, 255, 255, 0.06);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.6);
+}
+
+/* Smooth theme transitions */
+body, .card, input, select, textarea, button, table, th, td {
+  transition: background-color var(--duration) var(--ease),
+              border-color var(--duration) var(--ease),
+              color var(--duration) var(--ease);
+}
+
+/* ── Typography ─────────────────────────────────────────── */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+               "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* Vue mounts everything inside #app — make IT the flex container so
+   <Sidebar> + <main> become flex siblings. The body{display:flex} that
+   used to live here was a dead rule because #app sits between body and
+   the layout siblings. */
+#app {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+h1, h2, h3, h4 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+h1 { font-size: 22px; line-height: 1.3; }
+h2 { font-size: 18px; line-height: 1.35; }
+h3 { font-size: 15px; line-height: 1.4; }
+h4 { font-size: 13px; line-height: 1.4; }
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Card primitive ─────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+/* ── Form controls ──────────────────────────────────────── */
+input, select, textarea {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--duration-fast) var(--ease),
+              box-shadow var(--duration-fast) var(--ease);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+/* ── Buttons (Apple-style) ──────────────────────────────── */
+.btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease),
+              border-color var(--duration-fast) var(--ease),
+              transform var(--duration-fast) var(--ease),
+              box-shadow var(--duration-fast) var(--ease);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+}
+.btn:hover { background: var(--bg); }
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover {
+  background: var(--primary-dk);
+  border-color: var(--primary-dk);
+}
+.btn-danger {
+  background: var(--card);
+  color: var(--danger);
+  border-color: var(--border);
+}
+.btn-danger:hover {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+.btn:disabled, button[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.btn-sm { padding: 5px 11px; font-size: 12px; min-height: 26px; }
+.btn-lg { padding: 11px 22px; font-size: 14px; min-height: 40px; font-weight: 600; }
+
+code {
+  font-family: "SF Mono", "JetBrains Mono", "Cascadia Mono", "Consolas", monospace;
+  font-size: 90%;
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+}
+
+/* ── Focus ring (accessibility) ─────────────────────────── */
+button:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Tables ─────────────────────────────────────────────── */
+table tbody tr {
+  transition: background-color var(--duration-fast) var(--ease);
+}
+table tbody tr:hover { background: var(--row-hover); }
+
+/* ── Spinners ───────────────────────────────────────────── */
+.btn[aria-busy="true"]::before {
+  content: '';
+  display: inline-block;
+  width: 12px; height: 12px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Apple-style scroll-bars (subtle) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 6px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* Selection */
+::selection { background: var(--primary-soft); color: var(--primary-dk); }
+
+/* ── Form layout constraints ────────────────────────────── */
+/* Forms read better at constrained widths — never stretch full-width on huge monitors.
+   Tables and lists keep filling available space (no constraint here). */
+.card > .form-grid {
+  max-width: 720px;
+}
+/* Wider grids that have 4 columns (schedule, bug tracker) */
+.card > .form-grid.form-grid-wide,
+.scope-row {
+  max-width: 1100px;
+}
+/* Settings cards' inner-form areas */
+.card .field input,
+.card .field select {
+  max-width: 480px;
+}
+.card .field textarea,
+.card textarea {
+  max-width: 920px;
+}
+
+/* ── Responsive breakpoints ─────────────────────────────── */
+/* Tablet portrait — slightly tighter cards, sidebar still visible */
+@media (max-width: 900px) {
+  .card { padding: var(--space-4); border-radius: var(--radius-md); }
+}
+/* Phone — drawer mode + iOS-friendly input size */
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+  h1 { font-size: 18px; }
+  h2 { font-size: 16px; }
+  /* Apple HIG / WCAG: primary actions hit 44px, secondary actions ≥40px */
+  .btn { min-height: 44px; padding: 11px 16px; }
+  .btn-sm { min-height: 40px; padding: 9px 14px; }
+  input, select, textarea { padding: 10px 12px; font-size: 16px; }
+
+  /* Stacked-card pattern for wide tables: each row becomes a card.
+     Add class="table-stack" on <table> and data-label="…" on each <td>.
+     Cells with data-label="" hide the label (use for action columns). */
+  .table-stack { display: block; width: 100%; }
+  .table-stack thead,
+  .table-stack tfoot { display: none; }
+  .table-stack tbody,
+  .table-stack tr { display: block; width: 100%; }
+  .table-stack tr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    background: var(--card);
+  }
+  .table-stack td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border: none !important;
+    text-align: left !important;
+    font-size: 13px;
+    min-height: 0;
+  }
+  .table-stack td:before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .table-stack td[data-label=""]:before { display: none; }
+  .table-stack td[data-label=""] { justify-content: flex-end; }
+}
+
+/* ── Utility classes ────────────────────────────────────── */
+.text-muted { color: var(--muted); }
+.text-secondary { color: var(--text-secondary); }
+.text-sm { font-size: 12px; }
+.text-xs { font-size: 11px; }
+.fade-enter-active, .fade-leave-active { transition: opacity var(--duration) var(--ease); }
+.fade-enter-from, .fade-leave-to { opacity: 0; }

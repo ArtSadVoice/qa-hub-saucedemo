@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Hub runtime state
+hub/config.json
+hub/run_history.json
+hub/run_history_archive/
+hub/schedules.json
+hub/schedule.log
+hub/bugs/
+hub/logs/
+hub/backups/
+hub/config_backups/
+hub/metrics.db
+hub/.env
+
+# Vue build output (regenerate via `cd hub/frontend && npm run build`)
+hub/static/dist/
+hub/frontend/node_modules/
+hub/frontend/dist/
+
+# Node
+node_modules/
+package-lock.json
+
+# Playwright
+playwright-report/
+test-results/
+projects/saucedemo/test-results/
+projects/saucedemo/playwright-report/
+
+# OS
+.DS_Store
+Thumbs.db

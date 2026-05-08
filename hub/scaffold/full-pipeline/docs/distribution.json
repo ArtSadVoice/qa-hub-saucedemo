@@ -1,0 +1,17 @@
+{
+  "project": "{{PROJECT_NAME}}",
+  "team": [
+    {"name": "QA Lead", "email": "qa@example.com", "role": "QA"},
+    {"name": "PM", "email": "pm@example.com", "role": "PM"},
+    {"name": "Dev Lead", "email": "dev@example.com", "role": "Dev"}
+  ],
+  "report_recipients": ["qa@example.com", "pm@example.com"],
+  "slack_webhook": "",
+  "slack_channel": "#qa-reports",
+  "smtp": {
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "user": "",
+    "password": ""
+  }
+}

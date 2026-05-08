@@ -1,0 +1,8 @@
+﻿{
+  "name": "qa-hub-saucedemo-e2e",
+  "private": true,
+  "description": "Root package — Playwright runner for Hub v2 e2e spec files in tests/e2e/*.spec.ts",
+  "devDependencies": {
+    "@playwright/test": "^1.44.0"
+  }
+}

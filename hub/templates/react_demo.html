@@ -1,0 +1,199 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>React 19 PoC — Bug Tracker | QA Hub Demo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F0F4F8; color: #1A2332; padding: 20px; }
+  h1 { font-size: 18px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+  .badge { background: #61DAFB; color: #20232a; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .sub { color: #6B7C93; font-size: 13px; margin-bottom: 18px; }
+  .card { background: #fff; border: 1px solid #DDE3EC; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+  .card-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: #1F3864; }
+  select, input { padding: 6px 10px; border: 1px solid #DDE3EC; border-radius: 6px; font-size: 13px; outline: none; background: #fff; color: inherit; }
+  select:focus, input:focus { border-color: #2E75B6; }
+  button { padding: 6px 14px; border: 1px solid var(--btn-border, #2E75B6); background: var(--btn-bg, #2E75B6); color: var(--btn-fg, #fff);
+           border-radius: 6px; font-size: 13px; cursor: pointer; }
+  button:hover { opacity: .9; }
+  button.danger { --btn-bg: #fff; --btn-fg: #C62828; --btn-border: #EF9A9A; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid #EEE; text-align: left; }
+  th { background: #F7FAFF; font-size: 11px; text-transform: uppercase; color: #6B7C93; }
+  .sev { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+  .sev.Critical { background: #B71C1C; color: #fff; }
+  .sev.High     { background: #FFEBEE; color: #C62828; }
+  .sev.Medium   { background: #FFF8E1; color: #F57F17; }
+  .sev.Low      { background: #E8F5E9; color: #2E7D32; }
+  .stat-row { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .stat { background: #F7FAFF; border: 1px solid #DDE3EC; border-radius: 8px; padding: 8px 14px; min-width: 100px; }
+  .stat .n { font-size: 22px; font-weight: 700; color: #2E75B6; }
+  .stat .l { font-size: 11px; text-transform: uppercase; color: #6B7C93; letter-spacing: .5px; }
+  .empty { text-align: center; padding: 30px; color: #6B7C93; font-style: italic; }
+  .form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 8px; align-items: end; }
+  .field label { display: block; font-size: 11px; color: #6B7C93; margin-bottom: 3px; font-weight: 600; }
+  .field input, .field select { width: 100%; }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<!-- React + Babel for in-browser JSX (no build step) -->
+<script crossorigin src="https://unpkg.com/react@19.0.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@19.0.0/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+const PROJECT_ID = '_mock-full';
+const SEVERITIES = ['Critical', 'High', 'Medium', 'Low'];
+
+function App() {
+  const [bugs, setBugs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+  const [form, setForm] = useState({ title: '', severity: 'High', status: 'Open' });
+
+  const filteredBugs = useMemo(
+    () => filter ? bugs.filter(b => b.severity === filter) : bugs,
+    [bugs, filter]
+  );
+
+  const countBySeverity = (s) => bugs.filter(b => b.severity === s).length;
+
+  const loadBugs = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`/api/bugs?p=${PROJECT_ID}`);
+      setBugs((await r.json()) || []);
+    } finally { setLoading(false); }
+  };
+
+  const addBug = async () => {
+    const title = form.title.trim();
+    if (!title) return;
+    const r = await fetch('/api/bugs/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: PROJECT_ID, ...form, title }),
+    });
+    if (r.ok) {
+      setForm({ ...form, title: '' });
+      loadBugs();
+    }
+  };
+
+  const deleteBug = async (id) => {
+    if (!confirm('Delete this bug?')) return;
+    await fetch('/api/bugs/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: PROJECT_ID, id }),
+    });
+    loadBugs();
+  };
+
+  useEffect(() => { loadBugs(); }, []);
+
+  return (
+    <div>
+      <h1>⚛️ Bug Tracker — React 19 PoC <span className="badge">React {React.version}</span></h1>
+      <p className="sub">Hits real <code>/api/bugs?p={PROJECT_ID}</code>. Total {bugs.length} bugs · filtered {filteredBugs.length}</p>
+
+      {/* Add bug form */}
+      <div className="card">
+        <div className="card-title">+ Add Bug</div>
+        <div className="form-grid">
+          <div className="field">
+            <label>Title</label>
+            <input
+              value={form.title}
+              onChange={e => setForm({ ...form, title: e.target.value })}
+              onKeyUp={e => e.key === 'Enter' && addBug()}
+              placeholder="Bug title..."
+            />
+          </div>
+          <div className="field">
+            <label>Severity</label>
+            <select value={form.severity} onChange={e => setForm({ ...form, severity: e.target.value })}>
+              {SEVERITIES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label>Status</label>
+            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+              <option>Open</option><option>Fixed</option><option>Closed</option>
+            </select>
+          </div>
+          <button onClick={addBug} disabled={!form.title.trim()}>Add</button>
+        </div>
+      </div>
+
+      {/* Filters + stats */}
+      <div className="card">
+        <div className="card-title">Filter & Stats</div>
+        <div className="stat-row">
+          {SEVERITIES.map(s => (
+            <div className="stat" key={s}>
+              <div className="n">{countBySeverity(s)}</div>
+              <div className="l">{s}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+          <label style={{fontSize:'13px',color:'#6B7C93'}}>Filter severity:</label>
+          <select value={filter} onChange={e => setFilter(e.target.value)}>
+            <option value="">All</option>
+            {SEVERITIES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <button onClick={loadBugs} style={{marginLeft:'auto'}}>↻ Refresh</button>
+        </div>
+      </div>
+
+      {/* Bug list */}
+      <div className="card">
+        <div className="card-title">Bug List</div>
+        {loading ? (
+          <div className="empty">Loading…</div>
+        ) : filteredBugs.length === 0 ? (
+          <div className="empty">No bugs match the current filter.</div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th style={{width:'40px'}}>#</th>
+                <th>Title</th>
+                <th style={{width:'90px'}}>Severity</th>
+                <th style={{width:'80px'}}>Status</th>
+                <th style={{width:'160px'}}>Created</th>
+                <th style={{width:'80px'}}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredBugs.map((b, i) => (
+                <tr key={b.id}>
+                  <td>{i + 1}</td>
+                  <td><b>{b.title}</b></td>
+                  <td><span className={`sev ${b.severity}`}>{b.severity}</span></td>
+                  <td>{b.status}</td>
+                  <td style={{fontFamily:'monospace',fontSize:'11.5px',color:'#6B7C93'}}>{b.created_at}</td>
+                  <td><button className="danger" onClick={() => deleteBug(b.id)}>Delete</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <p style={{fontSize:'11px',color:'#6B7C93',textAlign:'center',marginTop:'14px'}}>
+        React 19 from CDN with Babel-standalone (in-browser JSX). Source: /templates/react_demo.html
+      </p>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

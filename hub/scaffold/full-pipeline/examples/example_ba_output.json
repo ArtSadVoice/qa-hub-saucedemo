@@ -1,0 +1,157 @@
+{
+  "meta": {
+    "feature_id": "F-001",
+    "feature_name": "User Login",
+    "module": "Authentication",
+    "priority": "must",
+    "actors": ["Guest", "User", "Admin"],
+    "input_format_detected": "FORMAT_A",
+    "confidence_score": 0.95,
+    "analysis_notes": "Requirement ครบถ้วน ไม่ต้องถามเพิ่ม"
+  },
+  "preconditions": [
+    "มี account ในระบบแล้ว (email verified)",
+    "ยังไม่ได้ login",
+    "อยู่ที่ /login"
+  ],
+  "acceptance_criteria": [
+    {
+      "scenario_id": "SC-001",
+      "scenario_name": "Login success (user)",
+      "type": "happy_path",
+      "priority": "P1",
+      "actor": "Guest",
+      "given": "User อยู่ที่ /login และยังไม่ได้ login",
+      "when": "กรอก email ถูกต้อง + password ถูกต้อง แล้วคลิก 'Sign in'",
+      "then": {
+        "url": "/dashboard",
+        "visible_text": ["Welcome,"],
+        "hidden_text": [],
+        "state_changes": ["header แสดงชื่อ user", "nav items เปลี่ยนเป็น authenticated state"]
+      },
+      "tsid": "TS_01",
+      "tcid": "TS_01_01"
+    },
+    {
+      "scenario_id": "SC-002",
+      "scenario_name": "Login success (admin)",
+      "type": "happy_path",
+      "priority": "P1",
+      "actor": "Guest",
+      "given": "Admin อยู่ที่ /login",
+      "when": "กรอก admin email + password ถูกต้อง แล้วคลิก 'Sign in'",
+      "then": {
+        "url": "/admin/dashboard",
+        "visible_text": ["Admin"],
+        "hidden_text": [],
+        "state_changes": ["redirect ไป admin area"]
+      },
+      "tsid": "TS_01",
+      "tcid": "TS_01_02"
+    },
+    {
+      "scenario_id": "SC-003",
+      "scenario_name": "Login wrong password",
+      "type": "unhappy_path",
+      "priority": "P1",
+      "actor": "Guest",
+      "given": "User อยู่ที่ /login",
+      "when": "กรอก email ถูก แต่ password ผิด แล้วคลิก 'Sign in'",
+      "then": {
+        "url": "/login",
+        "visible_text": ["Invalid email or password"],
+        "hidden_text": [],
+        "state_changes": ["error message ปรากฏ", "ยังอยู่ที่ /login"]
+      },
+      "tsid": "TS_01",
+      "tcid": "TS_01_03"
+    },
+    {
+      "scenario_id": "SC-004",
+      "scenario_name": "Account locked after 5 failures",
+      "type": "edge_case",
+      "priority": "P1",
+      "actor": "Guest",
+      "given": "User กรอก password ผิดมาแล้ว 4 ครั้ง",
+      "when": "กรอก password ผิดอีก 1 ครั้ง แล้วคลิก 'Sign in'",
+      "then": {
+        "url": "/login",
+        "visible_text": ["Account locked. Try again in 15 minutes."],
+        "hidden_text": [],
+        "state_changes": ["ปุ่ม Sign in disabled", "error message สีแดง"]
+      },
+      "tsid": "TS_01",
+      "tcid": "TS_01_04"
+    }
+  ],
+  "permission_matrix": {
+    "actions": [
+      {
+        "action": "เข้า /login",
+        "url": "/login",
+        "guest": "allow",
+        "user": "redirect",
+        "admin": "redirect",
+        "redirect_to": "/dashboard",
+        "http_status": 302
+      }
+    ]
+  },
+  "error_catalog": [
+    {
+      "error_id": "ERR-001",
+      "trigger_condition": "email format ผิด",
+      "exact_ui_message": "Please enter a valid email address",
+      "display_location": "inline",
+      "display_duration": "จนกว่าจะแก้ไข",
+      "related_scenario_ids": ["SC-003"]
+    },
+    {
+      "error_id": "ERR-002",
+      "trigger_condition": "credentials ผิด",
+      "exact_ui_message": "Invalid email or password",
+      "display_location": "banner",
+      "display_duration": "จนกว่าจะกด submit ใหม่",
+      "related_scenario_ids": ["SC-003"]
+    },
+    {
+      "error_id": "ERR-003",
+      "trigger_condition": "login ผิด 5 ครั้ง",
+      "exact_ui_message": "Account locked. Try again in 15 minutes.",
+      "display_location": "banner",
+      "display_duration": "permanent จนกว่าจะ unlock",
+      "related_scenario_ids": ["SC-004"]
+    }
+  ],
+  "business_rules": [
+    {
+      "rule_id": "BR-001",
+      "description": "lock account หลังผิด 5 ครั้งภายใน 15 นาที",
+      "min_value": null,
+      "max_value": "5",
+      "test_approach": "login ผิด 4 ครั้ง (ไม่ lock) → ครั้งที่ 5 (lock) → ตรวจ message"
+    }
+  ],
+  "selectors": [
+    {
+      "element": "Email input",
+      "recommended_selector": "getByTestId",
+      "selector_value": "email-input",
+      "source": "doc_specified"
+    },
+    {
+      "element": "Sign in button",
+      "recommended_selector": "getByRole",
+      "selector_value": "button:Sign in",
+      "source": "doc_specified"
+    }
+  ],
+  "out_of_scope": [
+    {
+      "item": "Google OAuth",
+      "reason": "test แยกใน F-015",
+      "alternative_tool": null
+    }
+  ],
+  "clarifications_needed": []
+}

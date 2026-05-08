@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Pre-commit hook: if templates/Test_Result_Template.docx is in the staged
+# changes, run the template validator. Reject the commit on failure.
+#
+# Enable once per clone:
+#   git config core.hooksPath .githooks
+#
+# Or run setup.bat / setup.ps1 which sets it for you.
+
+set -e
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null || true)
+
+if echo "$staged" | grep -q '^templates/Test_Result_Template\.docx$'; then
+    echo "[pre-commit] templates/Test_Result_Template.docx is staged — running validator..."
+    if command -v python >/dev/null 2>&1; then
+        PY=python
+    elif command -v python3 >/dev/null 2>&1; then
+        PY=python3
+    else
+        echo "[pre-commit] WARN: no python on PATH — skipping template check"
+        exit 0
+    fi
+    if ! "$PY" scripts/check_template.py; then
+        echo ""
+        echo "[pre-commit] BLOCKED: template validation failed."
+        echo "  Restore from a templates/Test_Result_Template.docx.bak_* backup,"
+        echo "  or fix the issues above. Use 'git commit --no-verify' to override"
+        echo "  ONLY if you fully understand the risk."
+        exit 1
+    fi
+    echo "[pre-commit] template OK."
+fi
+
+exit 0

@@ -1,0 +1,21 @@
+# Feedback180 Manual-Testing Pipeline — Python dependencies
+# Install with: pip install -r requirements.txt
+#
+# Same profile as full-pipeline minus Playwright-related bits (we don't
+# execute browser tests in manual-testing, so no watchdog need either
+# for spec regeneration — but keep it if generate_report.py ever watches).
+
+# Word report generation
+python-docx>=1.1.0
+
+# Excel processing (TCM read/write + chart injection)
+openpyxl>=3.1.0
+
+# Data processing (summary aggregation)
+pandas>=2.0.0
+
+# XML parsing (transitive but pinning minimum prevents docx issues)
+lxml>=5.0.0
+
+# Environment variable loading (.env support in scripts)
+python-dotenv>=1.0.0

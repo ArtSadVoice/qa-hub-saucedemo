@@ -1,0 +1,10 @@
+flask
+jinja2
+lxml
+openpyxl
+pandas
+python-docx
+python-dotenv
+resend
+waitress
+watchdog

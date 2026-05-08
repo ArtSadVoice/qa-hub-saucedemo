@@ -1,0 +1,59 @@
+# F180 Hub reverse-proxy config for nginx.
+#
+# Use if you already run nginx. Otherwise prefer Caddyfile.example —
+# Caddy auto-provisions TLS certs; nginx needs certbot or manual certs.
+#
+# Install certs first (Let's Encrypt with certbot):
+#   sudo certbot certonly --standalone -d hub.your-domain.internal
+#
+# Then drop this file at /etc/nginx/sites-available/f180-hub and symlink
+# to sites-enabled/, test with `nginx -t`, and reload with `nginx -s reload`.
+
+upstream f180_hub {
+    server 127.0.0.1:8080;
+    keepalive 16;
+}
+
+# HTTP → HTTPS redirect
+server {
+    listen 80;
+    server_name hub.your-domain.internal;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name hub.your-domain.internal;
+
+    ssl_certificate     /etc/letsencrypt/live/hub.your-domain.internal/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/hub.your-domain.internal/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # Security headers
+    add_header X-Frame-Options         "SAMEORIGIN"        always;
+    add_header X-Content-Type-Options  "nosniff"           always;
+    add_header Referrer-Policy         "same-origin"       always;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    # Hub emits SSE (Stage run streams, system-check stream). These settings
+    # keep events flushing instead of being buffered.
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+    proxy_buffering off;
+    proxy_cache off;
+
+    # Allow long-running pipeline stages + large zip uploads
+    proxy_read_timeout 10m;
+    proxy_send_timeout 10m;
+    client_max_body_size 50m;
+
+    # Everything → Hub
+    location / {
+        proxy_pass http://f180_hub;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

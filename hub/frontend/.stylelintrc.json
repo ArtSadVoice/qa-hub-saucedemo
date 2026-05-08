@@ -1,0 +1,17 @@
+{
+  "customSyntax": "postcss-html",
+  "rules": {
+    "color-no-hex": [
+      true,
+      {
+        "message": "Hex color literal — prefer var(--primary), var(--success-soft), var(--muted), etc. so dark mode works. Baseline cleaned in v2.7.0; if a hex really is intentional (terminal/log dark, severity coral, chart accent) add /* stylelint-disable-line color-no-hex */ next to it."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["**/*.vue"],
+      "customSyntax": "postcss-html"
+    }
+  ]
+}

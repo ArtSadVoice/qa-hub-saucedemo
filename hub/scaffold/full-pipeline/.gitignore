@@ -1,0 +1,85 @@
+# ──────────────────────────────────────────────
+#  Node / Playwright
+# ──────────────────────────────────────────────
+node_modules/
+test-results/
+playwright-report/
+.playwright-mcp/
+
+# ──────────────────────────────────────────────
+#  Python
+# ──────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+
+# ──────────────────────────────────────────────
+#  Generated output (keep folders, ignore files)
+# ──────────────────────────────────────────────
+screenshots/*.png
+output/*.docx
+output/*.pdf
+logs/*.json
+logs/*.log
+archive/
+
+# ──────────────────────────────────────────────
+#  Input Excel (project-specific — add your own)
+# ──────────────────────────────────────────────
+input/*.xlsx
+
+# ──────────────────────────────────────────────
+#  Source customer artifacts (may contain PII — phone numbers,
+#  customer-mapped tokens etc.). Override per-file with `!path` if
+#  a sanitized version is intentionally tracked.
+# ──────────────────────────────────────────────
+requirements/*.xlsx
+requirements/*.md
+requirements/*.docx
+requirements/*.pdf
+!requirements/.gitkeep
+
+# ──────────────────────────────────────────────
+#  Environment / secrets
+# ──────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.env
+
+# ──────────────────────────────────────────────
+#  Flask / web server
+# ──────────────────────────────────────────────
+web/.server.pid
+
+# ──────────────────────────────────────────────
+#  Auto-generated snapshots / state files
+# ──────────────────────────────────────────────
+.snapshot.json
+logs/.snapshot.json
+
+# ──────────────────────────────────────────────
+#  OS / editor
+# ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ──────────────────────────────────────────────
+#  Keep empty placeholder directories
+# ──────────────────────────────────────────────
+!screenshots/.gitkeep
+!output/.gitkeep
+!logs/.gitkeep
+!archive/.gitkeep
+!input/.gitkeep

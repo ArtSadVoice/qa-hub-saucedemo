@@ -1,0 +1,89 @@
+# CI → Hub Integration Example
+#
+# Drop this in .github/workflows/ of a project repo to:
+#   1. Run Playwright tests
+#   2. Report pass/fail counts to Hub via POST /api/run/log
+#   3. Fail the CI job if Hub's Release Gate says NOGO (optional gating step)
+#
+# Prerequisites (GitHub repo variables — Settings → Variables → Actions):
+#   HUB_URL         — e.g. https://your-hub.internal (needs network path to your Hub)
+#   HUB_PROJECT_ID  — the id used in _hub/config.json (e.g. "feedback180-bay-e2e-surveys-bay")
+#
+# If HUB_URL isn't set, the optional Hub-reporting + gating steps are skipped and CI
+# still functions as normal test execution.
+
+name: CI → Hub Integration
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  test-and-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      # Load secrets/env from repo secrets (if any)
+      - name: Run Playwright tests
+        id: tests
+        env:
+          BASE_URL:  ${{ secrets.BASE_URL }}      # keep tokens in repo Secrets, not files
+          TEST_ENV:  uat
+        run: |
+          set +e
+          npx playwright test --grep "@smoke" --reporter=json > pw.json
+          RC=$?
+          PASS=$(jq '[.suites[]?.specs[]?.tests[]? | select(.results[0].status == "passed")] | length' pw.json)
+          FAIL=$(jq '[.suites[]?.specs[]?.tests[]? | select(.results[0].status == "failed" or .results[0].status == "timedOut")] | length' pw.json)
+          echo "pass=${PASS:-0}" >> "$GITHUB_OUTPUT"
+          echo "fail=${FAIL:-0}" >> "$GITHUB_OUTPUT"
+          echo "rc=$RC"         >> "$GITHUB_OUTPUT"
+          exit $RC
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      # ── Optional: report back to Hub ─────────────────────────────────
+      - name: Report run to Hub
+        if: always() && vars.HUB_URL != ''
+        run: |
+          curl -fsS -X POST "${{ vars.HUB_URL }}/api/run/log" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+                --arg pid  '${{ vars.HUB_PROJECT_ID }}' \
+                --argjson p '${{ steps.tests.outputs.pass }}' \
+                --argjson f '${{ steps.tests.outputs.fail }}' \
+                --argjson rc '${{ steps.tests.outputs.rc }}' \
+                '{project_id: $pid, step: "tests", pass: $p, fail: $f, rc: $rc, tag: "smoke", env: "uat"}')" \
+            || echo "::warning::Hub unreachable — run not logged"
+
+      # ── Optional: gate the deploy on Release Gate ────────────────────
+      - name: Check Release Gate
+        if: success() && vars.HUB_URL != ''
+        run: |
+          RESULT=$(curl -fsS "${{ vars.HUB_URL }}/api/release-gate?p=${{ vars.HUB_PROJECT_ID }}")
+          VERDICT=$(echo "$RESULT" | jq -r .verdict)
+          GO=$(echo "$RESULT" | jq -r .go)
+          echo "Hub verdict: $VERDICT (go=$GO)"
+          if [ "$GO" != "true" ]; then
+            echo "::error::Release Gate $VERDICT — deploy blocked"
+            echo "$RESULT" | jq '.criteria[] | select(.ok == false)'
+            exit 1
+          fi

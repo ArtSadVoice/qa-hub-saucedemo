@@ -1,0 +1,2046 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QA Hub Demo | Multi-Project Dashboard</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ══════════════════════════════════════════════════ -->
+<div id="sb-overlay" onclick="toggleSidebar()"></div>
+<nav class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="brand" id="sb-brand">🔬 QA Hub Demo</div>
+    <div class="sub" id="sb-subtitle">Multi-Project Dashboard</div>
+  </div>
+
+  <div class="sb-proj">
+    <div class="sb-proj-label">Active Project</div>
+    <select id="project-select" class="proj-select" onchange="switchProject(this.value)">
+      <option>Loading...</option>
+    </select>
+  </div>
+
+  <div class="sb-nav">
+    <!-- Project -->
+    <div class="nav-group">
+      <div class="nav-group-label">Project</div>
+      <div class="nav-item active" onclick="showSection('dashboard')">
+        <span class="ico">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showSection('pipeline')">
+        <span class="ico">⚡</span> Run Pipeline
+      </div>
+      <div class="nav-item" onclick="showSection('bugs')" style="justify-content:space-between">
+        <span style="display:flex;align-items:center;gap:10px"><span class="ico">🐛</span> Bugs</span>
+        <span id="nav-bug-badge" style="display:none;background:#B71C1C;color:#fff;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:10px;min-width:18px;text-align:center"></span>
+      </div>
+      <div class="nav-item" onclick="showSection('release')">
+        <span class="ico">🚦</span> Release
+      </div>
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <!-- Files -->
+    <div class="nav-group">
+      <div class="nav-group-label">Files</div>
+      <div class="nav-item" onclick="showSection('input')">
+        <span class="ico">📂</span> Input
+      </div>
+      <div class="nav-item" onclick="showSection('output')">
+        <span class="ico">📄</span> Output
+      </div>
+      <div class="nav-item" onclick="showSection('screenshots')">
+        <span class="ico">🖼️</span> Screenshots
+      </div>
+      <div class="nav-item" onclick="showSection('chart')">
+        <span class="ico">📈</span> Chart
+      </div>
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <!-- Hub -->
+    <div class="nav-group">
+      <div class="nav-group-label">Hub</div>
+      <div class="nav-item" onclick="showSection('projects')">
+        <span class="ico">🗂️</span> Projects
+      </div>
+      <div class="nav-item" onclick="showSection('summary')">
+        <span class="ico">📋</span> Summary
+      </div>
+      <div class="nav-item" onclick="showSection('schedule');clearSchedBadge()" style="justify-content:space-between">
+        <span style="display:flex;align-items:center;gap:10px"><span class="ico">🕐</span> Schedule</span>
+        <span id="nav-sched-badge" style="display:none;background:#E65100;color:#fff;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:10px;min-width:18px;text-align:center"></span>
+      </div>
+      <div class="nav-item" onclick="showSection('syscheck')">
+        <span class="ico">🩺</span> System Check
+      </div>
+      <div class="nav-item" onclick="showSection('guide')">
+        <span class="ico">📖</span> User Guide
+      </div>
+      <div class="nav-item" onclick="showSection('about')">
+        <span class="ico">ℹ️</span> About
+      </div>
+      <div class="nav-divider"></div>
+      <a class="nav-item" href="/v2/" style="text-decoration:none;color:rgba(255,255,255,.65);justify-content:space-between" title="Vue 3 strangler app — new features land here first">
+        <span><span class="ico">✨</span> Try v2 (Vue)</span>
+        <span style="background:#DCFCE7;color:#14532d;padding:1px 7px;border-radius:8px;font-size:9px;font-weight:700">NEW</span>
+      </a>
+    </div>
+  </div>
+  <div class="sb-footer" id="sb-footer">QA Hub Demo v1.0 · Central Dashboard</div>
+</nav>
+
+<!-- ═══ MAIN ══════════════════════════════════════════════════════ -->
+<div class="main">
+
+  <div class="topbar">
+    <button id="hamburger" onclick="toggleSidebar()" title="Toggle menu" style="display:none;background:none;border:none;cursor:pointer;font-size:20px;padding:0 4px;color:var(--text)">☰</button>
+    <h1 id="page-title">Dashboard</h1>
+    <span id="topbar-proj" class="topbar-proj">—</span>
+    <span id="run-badge" class="badge badge-ok">Ready</span>
+    <button class="btn btn-dark btn-sm" onclick="openCmdPalette()" title="Command Palette (⌘K)" style="font-size:12px">⌘K</button>
+    <button class="btn btn-dark btn-sm" style="position:relative;padding-right:10px" onclick="toggleNotifPanel()" title="Notifications">
+      🔔<span id="notif-badge" style="display:none;position:absolute;top:2px;right:2px;background:#B71C1C;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:8px;min-width:14px;text-align:center"></span>
+    </button>
+    <button class="btn btn-dark btn-sm" onclick="refreshCurrent()" title="Refresh ข้อมูล tab ปัจจุบัน (ไม่ reload หน้า)">🔄</button>
+    <button id="dark-toggle" class="btn btn-dark btn-sm" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
+  </div>
+
+  <!-- Notification Panel -->
+  <div id="notif-panel" style="display:none;position:fixed;top:54px;right:12px;width:320px;max-height:420px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.16);z-index:9990;overflow:hidden;flex-direction:column">
+    <div style="padding:12px 16px;font-size:13px;font-weight:700;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      🔔 Notifications
+      <button onclick="clearNotifs()" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--muted)">Clear all</button>
+    </div>
+    <div id="notif-list" style="overflow-y:auto;max-height:360px;padding:8px 0"></div>
+  </div>
+
+  <!-- Command Palette -->
+  <div id="cmd-palette-overlay" onclick="closeCmdPalette()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99995;align-items:flex-start;justify-content:center;padding-top:15vh">
+    <div onclick="event.stopPropagation()" style="width:560px;max-width:95vw;background:var(--card);border-radius:14px;box-shadow:0 16px 48px rgba(0,0,0,.28);overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border)">
+        <span style="font-size:16px;color:var(--muted)">🔍</span>
+        <input id="cmd-palette-input" placeholder="ค้นหาคำสั่ง, section, หรือ project…"
+          style="flex:1;border:none;background:transparent;font-size:14px;color:var(--text);outline:none"
+          oninput="_cpFilter(this.value)" onkeydown="_cpKey(event)">
+        <kbd style="font-size:10px;color:var(--muted);background:var(--bg);padding:2px 6px;border-radius:4px;border:1px solid var(--border)">Esc</kbd>
+      </div>
+      <div id="cmd-palette-results" style="max-height:360px;overflow-y:auto;padding:6px 0"></div>
+    </div>
+  </div>
+
+  <!-- Shortcut Help Modal -->
+  <div id="shortcut-help-overlay" onclick="closeShortcutHelp()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99996;align-items:center;justify-content:center">
+    <div onclick="event.stopPropagation()" style="background:var(--card);border-radius:14px;padding:28px;width:400px;max-width:95vw;box-shadow:0 16px 48px rgba(0,0,0,.28)">
+      <div style="font-size:15px;font-weight:700;margin-bottom:16px">⌨️ Keyboard Shortcuts</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:13px">
+        <div><kbd class="kb">G</kbd><kbd class="kb">D</kbd> Dashboard</div>
+        <div><kbd class="kb">G</kbd><kbd class="kb">P</kbd> Pipeline</div>
+        <div><kbd class="kb">G</kbd><kbd class="kb">B</kbd> Bugs</div>
+        <div><kbd class="kb">G</kbd><kbd class="kb">R</kbd> Release</div>
+        <div><kbd class="kb">G</kbd><kbd class="kb">S</kbd> Screenshots</div>
+        <div><kbd class="kb">G</kbd><kbd class="kb">J</kbd> Projects</div>
+        <div><kbd class="kb">R</kbd> Refresh</div>
+        <div><kbd class="kb">⌘K</kbd> Command Palette</div>
+        <div><kbd class="kb">?</kbd> This help</div>
+        <div><kbd class="kb">Esc</kbd> Close modal</div>
+      </div>
+      <button onclick="closeShortcutHelp()" class="btn btn-sm" style="margin-top:20px;width:100%">Got it</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ DASHBOARD ═════════════════════════════════════════════ -->
+    <div id="section-dashboard" class="section active">
+      <div class="stats" id="stats-row">
+        <div class="stat"><div class="stat-val c-total" id="s-total">—</div><div class="stat-lbl">Total TCs</div></div>
+        <div class="stat"><div class="stat-val c-pass"  id="s-pass">—</div><div class="stat-lbl">Pass</div></div>
+        <div class="stat"><div class="stat-val c-fail"  id="s-fail">—</div><div class="stat-lbl">Fail</div></div>
+        <div class="stat"><div class="stat-val c-pct"   id="s-pct">—</div><div id="s-pct-delta" style="font-size:11px;margin-top:2px;min-height:14px"></div><div class="stat-lbl">Accuracy</div></div>
+        <div class="stat" style="cursor:pointer" onclick="showSection('bugs')" title="View Bug Reports">
+          <div class="stat-val" id="s-open-bugs" style="color:#B71C1C">—</div>
+          <div class="stat-lbl">Open Bugs 🐛</div>
+        </div>
+      </div>
+      <div id="quick-action-bar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="btn btn-primary btn-sm" style="flex:1;min-width:130px" onclick="runTestsWithTag(this)">▶ Run Tests</button>
+        <button class="btn btn-sm" style="flex:1;min-width:130px;background:#EEF4FF;color:#1565C0;border:1px solid #C5D8FF" onclick="showSection('bugs');setTimeout(openBugModal,80)">🐛 Add Bug</button>
+        <button class="btn btn-sm" style="flex:1;min-width:130px;background:#F3E5F5;color:#6A1B9A;border:1px solid #CE93D8" onclick="copyCmd('/traceability')">📊 Traceability</button>
+        <button class="btn btn-sm" style="flex:1;min-width:130px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7" onclick="showSection('pipeline');setTimeout(()=>{const el=document.getElementById('send-report-row');if(el)el.scrollIntoView({behavior:'smooth'})},200)">📤 Send Report</button>
+      </div>
+      <div class="card" id="trend-card" style="margin-bottom:14px">
+        <div class="card-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          Test Run Trend
+          <span id="trend-badge" style="display:none;font-size:11px;font-weight:600;padding:2px 9px;border-radius:10px"></span>
+          <div id="dash-env-bar" style="display:flex;gap:4px;margin-left:auto">
+            <button class="dash-env-btn active" data-env="all"  onclick="setDashEnv('all')"  title="รวมทุก environment (UAT + Prod)" style="padding:3px 10px;border-radius:20px;border:1px solid #90CAF9;background:#E3F2FD;color:#1565C0;font-size:11.5px;font-weight:600;cursor:pointer">All</button>
+            <button class="dash-env-btn"        data-env="uat"  onclick="setDashEnv('uat')"  title="เฉพาะ runs ที่ TEST_ENV=uat" style="padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--muted);font-size:11.5px;font-weight:600;cursor:pointer">🟢 UAT</button>
+            <button class="dash-env-btn"        data-env="prod" onclick="setDashEnv('prod')" title="เฉพาะ runs ที่ TEST_ENV=prod — ระวัง: เป็น environment จริง" style="padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--muted);font-size:11.5px;font-weight:600;cursor:pointer">🔴 Prod</button>
+          </div>
+          <button class="btn btn-sm" style="background:var(--bg);color:var(--muted);border:1px solid var(--border);font-size:13px" onclick="loadTrend()" title="รีเฟรช Trend chart">↻</button>
+        </div>
+        <div id="trend-stats" class="trend-stats" style="display:none"></div>
+        <div class="trend-wrap"></div>
+        <div id="trend-legend" class="trend-legend" style="display:none"></div>
+      </div>
+      <div class="card" id="flakiness-card" style="display:none">
+        <div class="card-title" style="display:flex;align-items:center;gap:8px">
+          🧪 Flakiness Analysis
+          <span id="flak-verdict" class="flak-badge"></span>
+          <button class="btn btn-sm" style="margin-left:auto;background:var(--bg);color:var(--muted);border:1px solid var(--border);font-size:13px" onclick="loadFlakiness()" title="Re-analyse">↻</button>
+        </div>
+        <div id="flak-body" style="padding:10px 4px"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Project Information</div>
+        <table class="ts-table" id="proj-table">
+          <tr><td colspan="2" style="color:var(--muted);font-size:13px">Loading...</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          Test Scenario Summary
+          <div id="ts-env-bar" style="display:flex;gap:4px;align-items:center;margin-left:auto">
+            <button class="ts-env-btn active" data-env="all"  onclick="setDashEnv('all')"  title="รวมทุก environment (UAT + Prod)" style="padding:3px 10px;border-radius:20px;border:1px solid #90CAF9;background:#E3F2FD;color:#1565C0;font-size:11.5px;font-weight:600;cursor:pointer">All</button>
+            <button class="ts-env-btn"        data-env="uat"  onclick="setDashEnv('uat')"  title="เฉพาะ runs ที่ TEST_ENV=uat" style="padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--muted);font-size:11.5px;font-weight:600;cursor:pointer">🟢 UAT</button>
+            <button class="ts-env-btn"        data-env="prod" onclick="setDashEnv('prod')" title="เฉพาะ runs ที่ TEST_ENV=prod — ระวัง: เป็น environment จริง" style="padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--muted);font-size:11.5px;font-weight:600;cursor:pointer">🔴 Prod</button>
+            <span style="width:1px;height:16px;background:var(--border);margin:0 2px"></span>
+            <button id="ts-export-btn" onclick="exportScenarioExcel()" title="Export เป็น Excel" style="padding:3px 11px;border-radius:6px;border:1px solid #A5D6A7;background:#E8F5E9;color:#2E7D32;font-size:11.5px;font-weight:600;cursor:pointer;transition:opacity .15s">📥 Export Excel</button>
+          </div>
+        </div>
+        <table class="ts-table table-stack" id="ts-table">
+          <thead>
+            <tr>
+              <th>TSID</th><th>Description</th><th style="text-align:center">Total</th>
+              <th style="text-align:center">Pass</th><th style="text-align:center">Fail</th>
+              <th style="text-align:center">In‑Prog</th><th style="text-align:center">Block</th>
+            </tr>
+          </thead>
+          <tbody id="ts-tbody"><tr><td colspan="7" data-label="" style="color:var(--muted);padding:16px">Loading...</td></tr></tbody>
+        </table>
+        <div id="ts-ghost-note" style="font-size:11px;color:var(--muted);margin-top:6px;text-align:right"></div>
+      </div>
+      <div class="card" id="retrofit-card" style="display:none">
+        <div class="card-title">🔧 Generate TCM from Specs</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7">
+          สร้าง TCM Excel จาก <code>test.describe()</code> ใน spec files อัตโนมัติ<br>
+          จะสร้างไฟล์ <code>input/TCM_[project].xlsx</code> พร้อมใช้กับ full pipeline
+        </div>
+        <div id="retrofit-result" style="display:none;margin-bottom:12px"></div>
+        <button class="btn btn-primary" id="retrofit-btn" onclick="retrofitTCM()">⚡ Generate TCM Excel</button>
+      </div>
+    </div>
+
+    <!-- ══ PIPELINE ══════════════════════════════════════════════ -->
+    <div id="section-pipeline" class="section">
+      <!-- Pipeline Progress Strip -->
+      <div id="pipeline-progress-strip" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:12px;display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="font-size:12px;font-weight:600;color:var(--muted)">Pipeline Progress</span>
+          <span id="pipeline-progress-label" style="font-size:12px;font-weight:700;color:var(--text)">—</span>
+          <span id="pipeline-progress-pct" style="font-size:11px;color:var(--muted);margin-left:auto"></span>
+        </div>
+        <div style="background:var(--bg);border-radius:4px;height:7px;overflow:hidden">
+          <div id="pipeline-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--primary),var(--success));border-radius:4px;transition:width .4s;width:0%"></div>
+        </div>
+        <div id="pipeline-stage-dots" style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap"></div>
+      </div>
+      <div id="playwright-only-banner" style="display:none;margin-bottom:14px;padding:12px 16px;background:#F3E5F5;border:1px solid #CE93D8;border-radius:10px;font-size:13px;color:#6A1B9A">
+        <b>🎭 Playwright-Only Project</b> — แสดงเฉพาะ Stage 5 (Run Tests) · Stages ที่เกี่ยวกับ TCM Excel และ Word Report ถูกซ่อนไว้
+      </div>
+      <div id="pytest-only-banner" style="display:none;margin-bottom:14px;padding:12px 16px;background:#E0F2F1;border:1px solid #80CBC4;border-radius:10px;font-size:13px;color:#00695C">
+        <b>🐍 Pytest-Only Project</b> — รัน pytest แทน npx playwright · แสดง Stages 5 (Run Tests), 7 (Open HTML Report), 8/9 (Open/Download) · TCM Excel และ Word Report ถูกซ่อนไว้
+      </div>
+      <div id="manual-testing-banner" style="display:none;margin-bottom:14px;padding:12px 16px;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:10px;font-size:13px;color:#2E7D32">
+        <b>📋 Manual Testing Project</b> — Stage 4 (Playwright Spec) และ Stage 5 (Run Tests) ถูกซ่อนไว้ · ทดสอบด้วย manual แล้วกรอกผลใน Excel TCM (Stage 6) ก่อน Generate Report (Stage 7)
+      </div>
+
+      <!-- Pipeline mode selector -->
+      <div id="pipeline-mode-bar" style="display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+        <span style="font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap">โหมด Pipeline:</span>
+        <button id="mode-full"   class="btn btn-sm pipeline-mode active" onclick="setPipelineMode('full')">Full (9 stages)</button>
+        <button id="mode-manual" class="btn btn-sm pipeline-mode"        onclick="setPipelineMode('manual')">Manual TCM</button>
+        <button id="mode-report" class="btn btn-sm pipeline-mode"        onclick="setPipelineMode('report')">Report Only</button>
+        <span style="font-size:11px;color:var(--muted);margin-left:4px">Manual TCM = Excel → Report เท่านั้น &nbsp;|&nbsp; Report Only = เฉพาะ Stage 7,8,9</span>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+        <span style="font-size:12px;background:#FFFDE7;color:#F57F17;padding:4px 11px;border-radius:16px;font-weight:700;border:1px solid #FFE082">🧑 ทำเอง</span>
+        <span style="font-size:12px;background:#E3F2FD;color:#1565C0;padding:4px 11px;border-radius:16px;font-weight:700;border:1px solid #90CAF9">🤖 รันคำสั่ง</span>
+        <div class="dot-legend">
+          <span><span class="dot" style="background:var(--success)"></span>พร้อมแล้ว</span>
+          <span><span class="dot" style="background:var(--warn)"></span>ยังไม่ครบ</span>
+          <span><span class="dot" style="background:#CDD5DC"></span>ไม่ได้ใช้</span>
+        </div>
+        <button class="btn btn-sm" style="background:#F0F4F8;color:var(--muted);border:1px solid var(--border);margin-left:auto" onclick="loadPipelineStatus()">🔄 Refresh</button>
+      </div>
+
+      <div class="tl-item auto" data-stage="0">
+        <div class="tl-left"><div class="tl-num">0</div><div class="tl-badge auto-badge">🤖 รันคำสั่ง</div></div>
+        <div class="tl-right">
+          <div class="tl-title">Explore Survey <span style="font-size:11px;font-weight:400;color:var(--muted)">(ก่อนเริ่ม — survey app เท่านั้น)</span></div>
+          <div class="tl-desc">ใช้ Playwright MCP เดิน survey ทุก branch path อัตโนมัติ → สร้าง <code>requirements/survey_map.md</code> + <code>FLOW.md</code> (Mermaid diagram) ก่อนที่ BA Agent จะวิเคราะห์ requirement</div>
+          <div class="tl-output">📁 Output: <code>requirements/survey_map.md</code> · <code>FLOW.md</code> · <code>docs/path_tree_YYYYMMDD.md</code></div>
+          <div style="margin:6px 0;padding:6px 10px;background:#E8F5E9;border-left:3px solid #66BB6A;border-radius:4px;font-size:12px;color:#2E7D32">
+            💡 ต้องการ <b>Playwright MCP</b> — ติดตั้งด้วย: <code>npm install -g @playwright/mcp</code> แล้ว <code>claude mcp add playwright --scope user -- npx @playwright/mcp@latest</code>
+          </div>
+          <div class="btn-group" style="margin-top:10px">
+            <button class="btn btn-primary" onclick="runStep('explore','Stage 0: Explore Survey','',this)">🔍 Explore Survey Paths</button>
+          </div>
+        </div>
+        <div class="tl-dot" id="s0-dot"></div>
+      </div>
+      <div class="tl-connector" data-after-stage="0"></div>
+
+      <div class="tl-item manual">
+        <div class="tl-left"><div class="tl-num">1</div><div class="tl-badge manual-badge">🧑 ทำเอง</div></div>
+        <div class="tl-right">
+          <div class="tl-title">เตรียมไฟล์ Input</div>
+          <div class="tl-desc">วางไฟล์ requirement (.md) ใน <code>requirements/</code> และ/หรือ Figma (.png) ใน <code>figma/</code></div>
+          <div class="tl-files" id="s1-files">กำลังตรวจสอบ...</div>
+          <div id="s1-figma-hint" style="display:none;margin-top:6px;padding:6px 10px;background:#F3E5F5;border:1px solid #CE93D8;border-radius:6px;font-size:12px;color:#4A148C"></div>
+          <div class="btn-group" style="margin-top:8px">
+            <button class="btn btn-sm" style="background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7" onclick="openFolder('requirements')" title="คัดลอก absolute path ไป clipboard">📋 requirements/</button>
+            <button class="btn btn-sm" style="background:#F3E5F5;color:#6A1B9A;border:1px solid #CE93D8" onclick="openFolder('figma')" title="คัดลอก absolute path ไป clipboard">📋 figma/</button>
+          </div>
+          <div style="margin-top:8px;padding:8px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;font-size:12.5px;line-height:1.8">
+            💡 <b>ยังไม่มี requirement?</b> ให้ Claude Code ช่วยเขียนได้เลย:<br>
+            <code style="background:var(--border);padding:2px 7px;border-radius:4px;font-size:12px">/write-req</code>
+            <span style="color:var(--muted)"> — Claude จะถามข้อมูล flow, validation, edge case แล้วเขียน requirement.md ให้</span><br>
+            <span style="color:var(--muted);font-size:11.5px">หรือ paste ข้อความ/ภาพ Figma ใน Claude Code แล้วพิมพ์ <code>/write-req [ชื่อ feature]</code></span>
+            <hr style="border:none;border-top:1px solid var(--border);margin:8px 0">
+            📄 <b>มีไฟล์อยู่แล้ว (Excel / Word / PDF)?</b> ให้ Claude สรุปรวมเป็น .md ให้อัตโนมัติ:<br>
+            <code style="background:var(--border);padding:2px 7px;border-radius:4px;font-size:12px">/summarize-input</code>
+            <span style="color:var(--muted)"> — อ่านทุกไฟล์ใน <code>requirements/</code> แล้วสรุปเป็น requirement.md พร้อมส่ง BA Agent ต่อทันที</span><br>
+            <span style="color:var(--muted);font-size:11.5px">✓ ลด token · ✓ รวม Excel หลาย sheet · ✓ สกัด Business Rules + Test Cases อัตโนมัติ</span>
+          </div>
+        </div>
+        <div class="tl-dot" id="s1-dot"></div>
+      </div>
+      <div class="tl-connector"></div>
+
+      <div class="tl-item auto" id="stage2-card">
+        <div class="tl-left"><div class="tl-num">2</div><div class="tl-badge auto-badge">🤖 รันคำสั่ง</div></div>
+        <div class="tl-right">
+          <div class="tl-title">สร้าง Excel TCM <span style="font-size:11px;font-weight:400;color:var(--muted)">(BA Agent + Stable Tool)</span></div>
+          <div class="tl-desc">BA Agent วิเคราะห์ requirement → <code>ba_output.json</code> แล้ว generate_tcm.py (stable tool) สร้าง TCM Excel 3 sheets (PROJECT_INFO, SUMMARY, TCM) deterministic ภายใน ~1 วินาที</div>
+          <div id="s2-api-warning" style="display:none;margin:6px 0;padding:6px 10px;background:#E3F2FD;border-left:3px solid #90CAF9;border-radius:4px;font-size:12px;color:#1565C0">
+            ℹ️ <b>ANTHROPIC_API_KEY</b> ไม่ได้ตั้งค่า — ใช้ <b>claude CLI</b> แทน (ช้ากว่าเล็กน้อย แต่ทำงานได้เหมือนกัน)
+          </div>
+          <div class="tl-files" id="s2-files">กำลังตรวจสอบ...</div>
+          <div class="tl-output">📁 Output: <code>input/ProjectName_TestCase.xlsx</code> · <code>logs/ba_output_*.json</code></div>
+          <div style="margin-top:8px;padding:7px 11px;background:#FFF8E1;border-left:3px solid #FFB300;border-radius:0 6px 6px 0;font-size:12px;line-height:1.7">
+            💡 <b>Requirement อัปเดตแล้ว?</b> ใช้ <code>/diff-req</code> ก่อน — ดูว่า TCM ต้อง regenerate ไหม ประหยัดเวลาถ้าเปลี่ยนแค่บางส่วน<br>
+            📋 <b>มี open issues ค้าง?</b> ใช้ <code>/open-issues</code> ตรวจก่อน execute — clarify ก่อนรัน test ผลจะแม่นกว่า
+          </div>
+          <div class="btn-group" style="margin-top:10px">
+            <button class="btn btn-primary" id="s2-run-btn" onclick="runStep('ba','Stage 2: BA Agent','',this)">▶ Run BA Agent</button>
+          </div>
+        </div>
+        <div class="tl-dot" id="s2-dot"></div>
+      </div>
+      <div class="tl-connector"></div>
+
+      <div class="tl-item manual">
+        <div class="tl-left"><div class="tl-num">3</div><div class="tl-badge manual-badge">🧑 ทำเอง</div></div>
+        <div class="tl-right">
+          <div class="tl-title">Review &amp; แก้ไข Excel</div>
+          <div class="tl-desc">เปิด Excel ตรวจสอบ 3 sheets: <b>PROJECT_INFO</b>, <b>SUMMARY</b>, <b>TCM</b> แล้วบันทึกปิดก่อนรัน Stage ถัดไป</div>
+          <div class="tl-files" id="s3-files">กำลังตรวจสอบ...</div>
+          <div class="tl-tip">⚠️ ต้องกรอก PROJECT_INFO ให้ครบ แล้วบันทึกปิด Excel ก่อน</div>
+          <div id="s3-review-result" style="display:none;margin:8px 0 4px;padding:8px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;font-size:12px;white-space:pre-wrap;max-height:260px;overflow-y:auto;color:var(--text)"></div>
+          <div class="btn-group" style="margin-top:10px">
+            <button class="btn btn-sm" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9" onclick="openInputFolder()" title="คัดลอก absolute path ไป clipboard">📋 Copy Input Path</button>
+            <button class="btn btn-purple btn-sm" onclick="runStep('add-charts','Stage 3: Add Charts to Excel','',this)">📊 Add Charts to Excel</button>
+            <button class="btn btn-sm" style="background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7" onclick="runReviewExcel()">🔍 Review TCM</button>
+            <span style="font-size:11.5px;color:var(--muted);align-self:center">(AI วิเคราะห์คุณภาพ test cases)</span>
+          </div>
+        </div>
+        <div class="tl-dot" id="s3-dot"></div>
+      </div>
+      <div class="tl-connector"></div>
+
+      <div class="tl-item auto">
+        <div class="tl-left"><div class="tl-num">4</div><div class="tl-badge auto-badge">🤖 รันคำสั่ง</div></div>
+        <div class="tl-right">
+          <div class="tl-title">สร้าง Playwright Spec Files</div>
+          <div class="tl-desc">สร้าง test script จาก Excel TCM ที่ review แล้ว โดยใช้ ba_output จาก Stage 2</div>
+          <div class="tl-files" id="s4-files">กำลังตรวจสอบ...</div>
+          <div class="tl-output">📁 Output: <code>tests/e2e/TS_XX_xxx.spec.ts</code></div>
+          <div class="tl-tip">⚠️ หลังสร้างแล้ว ต้องตรวจสอบ selector ให้ตรงกับ UI จริงก่อนรัน tests</div>
+          <div class="btn-group" style="margin-top:10px">
+            <button class="btn btn-primary" onclick="runStep('spec','Stage 4: Generate Spec Files','',this)">▶ Generate Spec Files</button>
+          </div>
+        </div>
+        <div class="tl-dot" id="s4-dot"></div>
+      </div>
+      <div class="tl-connector"></div>
+
+      <div class="tl-item auto">
+        <div class="tl-left"><div class="tl-num">5</div><div class="tl-badge auto-badge">🤖 รันคำสั่ง</div></div>
+        <div class="tl-right">
+          <div class="tl-title">รัน Tests + บันทึก Screenshots</div>
+          <div class="tl-desc">รัน Playwright tests ทั้งหมดและบันทึก screenshot ของทุก test case อัตโนมัติ</div>
+          <div class="tl-files" id="s5-files">กำลังตรวจสอบ...</div>
+          <div id="s5-stale-warn" style="display:none;margin:6px 0;padding:6px 10px;background:#FFF8E1;border-left:3px solid #FFC107;border-radius:4px;font-size:12px;color:#795548">
+            ⚠️ Spec files เก่ากว่า Excel TCM — ควรรัน <b>Stage 4: Generate Spec Files</b> ก่อน
+          </div>
+          <div class="tl-output">📁 Output: <code>screenshots/TS_XX_XX.png</code></div>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap">
+            <select id="test-tag-select" class="btn btn-sm" style="cursor:pointer;padding:4px 8px" title="เลือก tag subset">
+              <option value="">All Tests</option>
+              <option value="smoke">@smoke — fast, happy path</option>
+              <option value="e2e">@e2e — full E2E</option>
+              <option value="regression">@regression — branch logic + validation</option>
+              <option value="visual">@visual — mobile/tablet viewports</option>
+              <option value="slow and statemod">slow and statemod (pytest) — long e2e success-paths</option>
+            </select>
+            <select id="test-env-select" class="btn btn-sm" style="cursor:pointer;padding:4px 8px" title="เลือก environment">
+              <option value="">UAT (default)</option>
+              <option value="prod">Production</option>
+            </select>
+            <button class="btn btn-primary" onclick="runTestsWithTag(this)">▶ Run Tests</button>
+          </div>
+        </div>
+        <div class="tl-dot" id="s5-dot"></div>
+      </div>
+      <div class="tl-connector"></div>
+
+      <!-- ── Traceability hint (after Stage 5) ── -->
+      <div class="cmd-hint-card" id="traceability-hint">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:18px">📊</span>
+          <div>
+            <div style="font-weight:700;font-size:13px">Traceability Matrix <span style="font-weight:400;color:var(--muted);font-size:12px">— optional แต่แนะนำก่อน release</span></div>
+            <div style="font-size:12px;color:var(--muted)">สร้าง Requirement ↔ TC ↔ Result matrix เพื่อ audit trail และตรวจ gaps ทุก layer</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <code style="background:#1E2A3A;color:#7DD3FC;padding:5px 12px;border-radius:6px;font-size:12.5px">/traceability --save</code>
+          <button class="btn btn-sm" onclick="copyCmd('/traceability --save')" style="background:#F0F4F8;color:var(--muted);border:1px solid var(--border);font-size:11.5px">📋 Copy</button>
+          <span style="font-size:12px;color:var(--muted)">→ บันทึก <code>docs/reviews/traceability_YYYYMMDD.md</code></span>
+        </div>
+      </div>
+      <div class="tl-connector"></div>
+
+      <div class="tl-item manual">
+        <div class="tl-left"><div class="tl-num">6</div><div class="tl-badge manual-badge">🧑 ทำเอง</div></div>
+        <div class="tl-right">
+          <div class="tl-title">อัปเดตผล Test ใน Excel</div>
+          <div class="tl-desc">เปิด Excel → Sheet <b>TCM</b> → กรอก Column J (Status) และ K (Executed Date) แล้วบันทึกปิด</div>
+          <div class="tl-files" id="s6-files"></div>
+          <div class="s6-auto-only">
+            <div id="s6-validate" style="margin:6px 0;font-size:12.5px"></div>
+            <div class="btn-group" style="margin-top:8px;margin-bottom:4px">
+              <button class="btn btn-sm" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9" onclick="openInputFolder()" title="คัดลอก absolute path ไป clipboard">📋 Copy Input Path</button>
+              <button class="btn btn-sm" style="background:#F0F4F8;color:var(--muted);border:1px solid var(--border)" onclick="refreshValidate()">🔄 Check Status</button>
+            </div>
+            <div style="margin-top:4px;font-size:12px;line-height:2">
+              <span class="pill pill-pass" style="margin-right:6px">Pass</span>
+              <span class="pill pill-fail" style="margin-right:6px">Fail</span>
+              <span class="pill pill-ip"  style="margin-right:6px">In-Progress</span>
+              <span class="pill pill-blk" style="margin-right:6px">Block</span>
+              <span class="pill pill-ns">Not Start</span>
+            </div>
+          </div>
+          <div class="s6-manual-only" style="display:none;margin-top:6px;padding:6px 10px;background:#FFF8E1;border-left:3px solid #FFC107;border-radius:4px;font-size:12.5px;color:#5D4037">
+            ⚠️ กรอก Pass/Fail ใน Sheet <b>TCM</b> → Column J (Status) และ K (Executed Date) แล้วบันทึกปิด Excel ก่อนกด Generate Report
+          </div>
+        </div>
+        <div class="tl-dot ok" id="s6-dot"></div>
+      </div>
+      <div class="tl-connector"></div>
+
+      <div class="tl-item auto">
+        <div class="tl-left"><div class="tl-num">7</div><div class="tl-badge auto-badge">🤖 รันคำสั่ง</div></div>
+        <div class="tl-right">
+          <div class="tl-title">Generate Word Report</div>
+          <div class="tl-desc">สร้าง Word test result report จาก Excel ที่อัปเดตแล้ว พร้อมสร้าง chart PNG</div>
+          <div class="tl-files" id="s7-files">กำลังตรวจสอบ...</div>
+          <div class="tl-output">📁 Output: <code>output/QAHUB_XXX_TestResult_YYYYMMDD.docx</code></div>
+          <div class="btn-group" style="margin-top:10px">
+            <button class="btn btn-success" onclick="runStepGuarded('generate','Stage 7: Generate Report',this)">▶ Generate Report</button>
+            <button class="btn btn-sm" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9" onclick="openOutputFolder()" title="คัดลอก absolute path ไป clipboard">📋 Copy Output Path</button>
+            <button id="watch-btn" class="btn btn-sm" style="background:#F3E5F5;color:#6A1B9A;border:1px solid #CE93D8" onclick="toggleWatch()" title="Auto-regenerate report เมื่อบันทึก Excel">👁 Watch Mode</button>
+          </div>
+        </div>
+        <div class="tl-dot" id="s7-dot"></div>
+      </div>
+      <div class="tl-connector"></div>
+
+      <div class="tl-item auto">
+        <div class="tl-left"><div class="tl-num">8</div><div class="tl-badge auto-badge">🤖 รันคำสั่ง</div></div>
+        <div class="tl-right">
+          <div class="tl-title">Inject Screenshots เข้า Word</div>
+          <div class="tl-desc">แนบรูป chart_summary.png และ screenshot ทุก test case เข้า Word output อัตโนมัติ</div>
+          <div class="tl-files" id="s8-files">กำลังตรวจสอบ...</div>
+          <div class="btn-group" style="margin-top:10px">
+            <button class="btn btn-warn" onclick="runStep('inject','Stage 8: Inject Screenshots','',this)">▶ Inject Screenshots</button>
+            <button class="btn btn-sm" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9" onclick="openScreenshotsFolder()" title="คัดลอก absolute path ไป clipboard">📋 Copy Screenshots Path</button>
+            <button class="btn btn-dark btn-sm" onclick="runStep('all','Stage 7+8: Report + Inject','',this)">⚡ Report + Inject</button>
+          </div>
+        </div>
+        <div class="tl-dot" id="s8-dot"></div>
+      </div>
+      <div class="tl-connector"></div>
+
+      <!-- ── Release Gate mini card (before Stage 9) ── -->
+      <div class="cmd-hint-card" id="release-gate-hint">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">🚦</span>
+            <div>
+              <div style="font-weight:700;font-size:13px">Release Gate — ตรวจ 8 criteria ก่อน deliver</div>
+              <div style="font-size:12px;color:var(--muted)">ตรวจสอบ gate ปัจจุบัน หรือรัน <code>/approve-release</code> ใน Claude Code เพื่อสร้าง sign-off checklist</div>
+            </div>
+          </div>
+          <button class="btn btn-sm" onclick="loadMiniGate()" style="background:#F0F4F8;color:var(--text);border:1px solid var(--border);font-size:11.5px;white-space:nowrap">🔄 ตรวจ Gate</button>
+        </div>
+        <div id="mini-gate-items" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:10px;font-size:12px">
+          <div style="color:var(--muted)">กด "ตรวจ Gate" เพื่อดูสถานะ</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--border)">
+          <span style="font-size:12px;color:var(--muted)">สร้าง sign-off checklist + Slack notify:</span>
+          <code style="background:#1E2A3A;color:#7DD3FC;padding:5px 12px;border-radius:6px;font-size:12.5px">/approve-release</code>
+          <button class="btn btn-sm" onclick="copyCmd('/approve-release')" style="background:#F0F4F8;color:var(--muted);border:1px solid var(--border);font-size:11.5px">📋 Copy</button>
+        </div>
+      </div>
+      <div class="tl-connector"></div>
+
+      <div class="tl-item auto">
+        <div class="tl-left"><div class="tl-num">9</div><div class="tl-badge auto-badge">🤖 รันคำสั่ง</div></div>
+        <div class="tl-right">
+          <div class="tl-title">ดูผลและ Download</div>
+          <div class="tl-desc">ไฟล์ Word report พร้อม Download — เปิดใน Word แล้วคลิก Contents → <b>Update Table</b></div>
+          <div class="tl-files" id="s9-files">กำลังตรวจสอบ...</div>
+          <div class="btn-group" style="margin-top:10px">
+            <a id="dl-output-link" href="#" download><button class="btn btn-download">⬇️ Download Word Report</button></a>
+            <button class="btn btn-sm" style="background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7" onclick="showSection('output')">📄 View Output</button>
+            <button class="btn btn-sm" style="background:#F3E5F5;color:#6A1B9A;border:1px solid #CE93D8" onclick="showSection('screenshots')">🖼️ Screenshots</button>
+            <button class="btn btn-sm" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9" onclick="showSection('chart')">📈 Chart</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap">
+            <span style="font-size:12px;font-weight:600;color:var(--muted)">📤 ส่ง Report:</span>
+            <select id="send-channel-select" class="btn btn-sm" style="cursor:pointer;padding:4px 8px">
+              <option value="both">Email + Slack</option>
+              <option value="email">Email only</option>
+              <option value="slack">Slack only</option>
+            </select>
+            <button class="btn btn-sm" style="background:#1565C0;color:#fff;border:none" onclick="runSendReport()">📤 Send Report</button>
+            <span style="font-size:11.5px;color:var(--muted)">ตั้งค่าผู้รับที่ <code>docs/distribution.json</code></span>
+          </div>
+        </div>
+        <div class="tl-dot" id="s9-dot"></div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="card">
+        <div class="card-title" id="log-title">📋 Log Output</div>
+        <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+        <div class="test-counter" id="test-counter">
+          <span>🧪 Tests:</span>
+          <span class="tc-pass">✓ Pass: <span id="tc-pass">0</span></span>
+          <span class="tc-fail">✗ Fail: <span id="tc-fail">0</span></span>
+          <span class="tc-flaky" id="tc-flaky-wrap" style="display:none">⚡ Flaky: <span id="tc-flaky">0</span></span>
+          <span class="tc-total">Total: <span id="tc-total">—</span></span>
+        </div>
+        <div class="log" id="log-box">
+          <div class="log-line l-muted">Ready. Click a button above to start.</div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-sm" style="background:#21262D;color:#8B949E" onclick="clearLog()">Clear Log</button>
+          <button id="cancel-run-btn" class="btn btn-sm" style="display:none;background:#B71C1C;color:#fff;font-weight:600" onclick="cancelRun()">⏹ Cancel</button>
+          <div id="post-fail-actions" style="display:none;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-sm" style="background:#E65100;color:#fff;font-weight:600" onclick="rerunFailed()">🔁 Re-run Failed (<span id="rerun-count">0</span>)</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-title">🕐 Run History — Tests</div>
+        <div id="run-history-wrap" style="overflow-x:auto">
+          <div style="color:var(--muted);font-size:13px;padding:8px">No history yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SCREENSHOTS ══════════════════════════════════════════ -->
+    <div id="section-screenshots" class="section">
+      <div class="card">
+        <div class="card-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span>Screenshots — <code style="font-weight:400;font-size:13px">screenshots/</code></span>
+          <span id="shot-count" style="font-size:12px;font-weight:400;color:var(--muted)"></span>
+          <input id="shot-search" type="search" placeholder="Filter by TCID…"
+            style="margin-left:auto;padding:5px 10px;border:1px solid var(--border);border-radius:7px;font-size:12.5px;outline:none;width:180px"
+            oninput="filterShots(this.value)">
+          <button class="btn btn-download btn-sm" onclick="downloadShots()" title="Download all screenshots as ZIP">⬇️ ZIP</button>
+        </div>
+        <div id="shot-grid" class="shot-grid"><div style="color:var(--muted);font-size:13px;padding:12px">Loading...</div></div>
+      </div>
+    </div>
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+      <span class="lb-close" onclick="closeLightbox()">✕</span>
+      <img id="lb-img" src="" alt="">
+      <div class="lb-label" id="lb-label"></div>
+    </div>
+
+    <!-- ══ INPUT ═════════════════════════════════════════════════ -->
+    <div id="section-input" class="section">
+      <div class="card">
+        <div class="card-title">Input Files — <code style="font-weight:400;font-size:13px">input/</code></div>
+        <div id="input-file-list"><div style="color:var(--muted);font-size:13px;padding:12px">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- ══ OUTPUT ════════════════════════════════════════════════ -->
+    <div id="section-output" class="section">
+      <div class="card">
+        <div class="card-title">Latest Output File</div>
+        <div id="output-file-card"><div style="color:var(--muted);font-size:13px;padding:12px">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- ══ CHART ═════════════════════════════════════════════════ -->
+    <div id="section-chart" class="section">
+      <div class="card">
+        <div class="card-title">Test Result Chart</div>
+        <div class="chart-wrap" id="chart-wrap">
+          <div class="chart-placeholder">Chart not yet generated.<br>Run <b>Generate Report</b> first.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PROJECTS ══════════════════════════════════════════════ -->
+    <div id="section-projects" class="section">
+
+      <!-- Overview grid -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px">All Projects
+          <button class="btn btn-sm btn-primary" style="float:right;margin-top:-2px" onclick="toggleAddForm()">+ Add Project</button>
+        </div>
+        <div id="proj-grid-container" class="proj-grid">
+          <div style="color:var(--muted);font-size:13px">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Add project form -->
+      <div class="add-proj-form" id="add-proj-form" style="display:none">
+        <div class="card-title" style="margin-bottom:12px">Add New Project</div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>ID (unique, no spaces)</label>
+            <input id="f-id" type="text" placeholder="e.g. ktb-branch">
+          </div>
+          <div class="form-field">
+            <label>Display Name</label>
+            <input id="f-name" type="text" placeholder="e.g. KTB Branch Survey">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field" style="flex:2">
+            <label>Path (relative to C:\Automation\ or absolute)</label>
+            <input id="f-path" type="text" placeholder="e.g. KTB/cr133-callback">
+          </div>
+          <div class="form-field" style="flex:1">
+            <label>Type</label>
+            <select id="f-type">
+              <option value="full-pipeline">full-pipeline (TCM + Playwright + Report)</option>
+              <option value="manual-testing">manual-testing (TCM + Manual Test + Report)</option>
+              <option value="playwright-only">playwright-only (Playwright เท่านั้น)</option>
+              <option value="pytest-only">pytest-only (Python pytest เท่านั้น)</option>
+            </select>
+          </div>
+          <div class="form-field" style="flex:0 0 100px">
+            <label>Color</label>
+            <input id="f-color" type="color" value="#2E75B6" style="height:34px;padding:2px 4px">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field" style="flex:1">
+            <label>Company <span style="font-weight:400;color:var(--muted)">(ใช้ grouping ใน Projects tab)</span></label>
+            <input id="f-company" type="text" placeholder="e.g. KTB, BAY, SCB" list="company-suggestions">
+            <datalist id="company-suggestions"></datalist>
+          </div>
+          <div class="form-field" style="flex:1">
+            <label>Category</label>
+            <select id="f-category">
+              <option value="">— ไม่ระบุ —</option>
+              <option value="New">🟢 New</option>
+              <option value="CR">🔵 CR (Change Request)</option>
+              <option value="Incident">🔴 Incident</option>
+              <option value="Regression">🟠 Regression</option>
+              <option value="Other">⚪ Other</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px">
+          <input id="f-create-folder" type="checkbox" style="width:15px;height:15px;cursor:pointer" onchange="toggleInitOptions()">
+          <label for="f-create-folder" style="font-size:12.5px;cursor:pointer;color:var(--text)">
+            สร้าง folder อัตโนมัติ
+          </label>
+        </div>
+        <div id="init-options" style="display:none;background:#EEF4FF;border:1px solid #C5D8FF;border-radius:8px;padding:12px 14px;margin-bottom:10px">
+          <!-- Radio: init mode -->
+          <div style="display:flex;gap:20px;margin-bottom:10px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px">
+              <input type="radio" name="f-init-mode" value="scaffold" checked onchange="onInitModeChange()">
+              📦 Copy scaffold <span style="color:var(--muted);font-size:11px">(_hub/scaffold/)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px">
+              <input type="radio" name="f-init-mode" value="git" onchange="onInitModeChange()">
+              🔗 Clone from Git URL
+            </label>
+          </div>
+
+          <!-- Git URL field (hidden by default) -->
+          <div id="git-url-field" style="display:none;margin-bottom:10px">
+            <div class="form-field">
+              <label>Git URL</label>
+              <input id="f-git-url" type="text" placeholder="https://github.com/org/template-repo.git">
+            </div>
+            <div style="margin-top:5px;font-size:11.5px;color:#555">
+              clone ด้วย <code>--depth 1</code> แล้วลบ <code>.git/</code> ออก — project เริ่มใหม่สะอาด
+            </div>
+          </div>
+
+          <!-- Playwright toggle -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <input id="f-has-playwright" type="checkbox" checked style="width:15px;height:15px;cursor:pointer" onchange="toggleBaseUrlField()">
+            <label for="f-has-playwright" style="font-size:12.5px;cursor:pointer;color:var(--text)">
+              โปรเจกต์นี้ใช้ Playwright (web testing)
+              <span style="color:var(--muted);font-size:11.5px">— ถ้าไม่ติ๊ก จะไม่ copy playwright.config.ts, package.json, tests/</span>
+            </label>
+          </div>
+
+          <!-- Base URL field -->
+          <div id="base-url-field" class="form-row" style="margin-bottom:4px">
+            <div class="form-field">
+              <label>Base URL <span style="font-weight:400;color:var(--muted)">(แทน {{BASE_URL}} ในทุกไฟล์)</span></label>
+              <input id="f-base-url" type="text" placeholder="https://your-app.example.com/path">
+            </div>
+          </div>
+        </div>
+        <!-- Figma URL (always visible, optional) -->
+        <div class="form-row" style="margin-top:6px;margin-bottom:2px">
+          <div class="form-field" style="flex:1">
+            <label>Figma File URL <span style="font-weight:400;color:var(--muted)">(optional — ใช้ใน BA Agent ผ่าน Figma MCP)</span></label>
+            <input id="f-figma-url" type="text" placeholder="https://www.figma.com/file/...">
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-success" onclick="addProject()">✓ Add Project</button>
+          <button class="btn btn-sm" style="background:#F0F4F8;color:var(--muted);border:1px solid var(--border)" onclick="toggleAddForm()">Cancel</button>
+          <button class="btn btn-sm" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9" onclick="discoverProjects()">🔍 Auto Discover</button>
+        </div>
+        <div class="discover-list" style="margin-top:12px"></div>
+      </div>
+
+    </div>
+
+    <!-- ══ SUMMARY ══════════════════════════════════════════════ -->
+    <div id="section-summary" class="section">
+      <div class="card">
+        <div class="card-title" style="display:flex;align-items:center;gap:8px">
+          All Projects — Overview
+          <span id="summary-count" style="font-size:11px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;padding:2px 8px;border-radius:10px;font-weight:600"></span>
+          <button class="btn btn-sm" style="margin-left:auto;background:#F0F4F8;color:var(--muted);border:1px solid var(--border)" onclick="loadSummary()">🔄 Refresh</button>
+        </div>
+        <div class="proj-filter-bar" style="margin-bottom:10px">
+          <select id="sf-company" onchange="_applySummaryFilter()">
+            <option value="all">🏢 All Companies</option>
+          </select>
+          <select id="sf-category" onchange="_applySummaryFilter()">
+            <option value="all">📁 All Categories</option>
+          </select>
+          <select id="sf-type" onchange="_applySummaryFilter()">
+            <option value="all">⚙️ All Types</option>
+            <option value="full-pipeline">🔄 Full Pipeline</option>
+            <option value="manual-testing">📋 Manual Testing</option>
+            <option value="playwright-only">🎭 Playwright Only</option>
+            <option value="pytest-only">🐍 Pytest Only</option>
+          </select>
+          <select id="sf-status" onchange="_applySummaryFilter()">
+            <option value="all">📊 All Status</option>
+            <option value="pass">✅ Has Pass</option>
+            <option value="fail">❌ Has Fail</option>
+            <option value="no-tcm">📭 No TCM</option>
+          </select>
+          <input id="sf-search" type="text" placeholder="🔍 ค้นหา project..." oninput="_applySummaryFilter()" style="min-width:150px">
+        </div>
+        <div id="summary-table-wrap">
+          <div style="color:var(--muted);font-size:13px;padding:12px">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SYSTEM CHECK ════════════════════════════════════════ -->
+    <div id="section-syscheck" class="section">
+      <div class="card">
+        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+          🩺 System Check
+          <button class="btn btn-sm btn-primary" id="syscheck-btn" onclick="runSystemCheck()">▶ Run Check</button>
+        </div>
+        <p style="font-size:13px;color:var(--muted);margin:0 0 16px">ตรวจสอบ dependencies, pipeline, SMTP connection และความพร้อมของระบบ</p>
+        <div id="syscheck-results"></div>
+        <div id="syscheck-summary" style="display:none;margin-top:18px;padding:16px 20px;border-radius:10px;font-size:14px;font-weight:600"></div>
+      </div>
+    </div>
+
+    <!-- ══ GUIDE ════════════════════════════════════════════════ -->
+    <div id="section-guide" class="section">
+
+      <!-- tab bar -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-sm guide-tab active-tab" onclick="showGuideTab('quickstart',this)">🚀 Quick Start</button>
+        <button class="btn btn-sm guide-tab" onclick="showGuideTab('daily-route',this)">🌅 Daily Route</button>
+        <button class="btn btn-sm guide-tab" onclick="showGuideTab('pipeline',this)">⚡ Pipeline Stages</button>
+        <button class="btn btn-sm guide-tab" onclick="showGuideTab('commands',this)">💬 Commands</button>
+        <button class="btn btn-sm guide-tab" onclick="showGuideTab('agents',this)">🤖 Agents</button>
+        <button class="btn btn-sm guide-tab" onclick="showGuideTab('release-wf',this)">🚦 Release Workflow</button>
+        <button class="btn btn-sm guide-tab" onclick="showGuideTab('syscheck-guide',this)">🩺 System Check</button>
+        <button class="btn btn-sm guide-tab" onclick="showGuideTab('setup',this)">⚙️ Setup</button>
+      </div>
+
+      <!-- ── Quick Start ── -->
+      <div id="gtab-quickstart" class="guide-panel">
+        <div class="card">
+          <div class="card-title">🚀 Quick Start — เริ่มต้นใช้งาน</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:16px">เริ่มโปรเจกต์ใหม่ตั้งแต่ศูนย์ถึง report ใน 7 ขั้นตอน</div>
+
+          <div style="display:grid;gap:12px">
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:#F0F7FF;border-radius:8px;border-left:4px solid #2E75B6">
+              <div style="font-size:22px;min-width:36px;text-align:center">1️⃣</div>
+              <div>
+                <div style="font-weight:700;margin-bottom:4px">สร้าง Project ใน Hub</div>
+                <div style="font-size:12.5px;color:var(--muted)">ไปที่ <b>Projects → Add Project</b> → กรอก Name, Base URL, Type = <code>full-pipeline</code> → Click <b>Copy Scaffold</b><br>Hub จะสร้างโฟลเดอร์พร้อม template ทั้งหมดให้อัตโนมัติ</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:#F0F7FF;border-radius:8px;border-left:4px solid #2E75B6">
+              <div style="font-size:22px;min-width:36px;text-align:center">2️⃣</div>
+              <div>
+                <div style="font-weight:700;margin-bottom:4px">วาง Requirements</div>
+                <div style="font-size:12.5px;color:var(--muted)">วางไฟล์ requirement (.md / .txt / Figma export) ใน <code>requirements/</code><br>หรือพิมพ์ <code>/write-req [feature name]</code> ใน Claude Code เพื่อสร้างไฟล์</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:#F0F7FF;border-radius:8px;border-left:4px solid #2E75B6">
+              <div style="font-size:22px;min-width:36px;text-align:center">3️⃣</div>
+              <div>
+                <div style="font-weight:700;margin-bottom:4px">รัน BA Agent → สร้าง TCM</div>
+                <div style="font-size:12.5px;color:var(--muted)">พิมพ์ <code>/ba-agent requirements/myfile.md</code><br>Agent วิเคราะห์ requirements แล้วสร้าง <code>input/[Project]_TestCase.xlsx</code></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:#F0F7FF;border-radius:8px;border-left:4px solid #2E75B6">
+              <div style="font-size:22px;min-width:36px;text-align:center">4️⃣</div>
+              <div>
+                <div style="font-weight:700;margin-bottom:4px">ตรวจ TCM ก่อนรัน Test</div>
+                <div style="font-size:12.5px;color:var(--muted)">พิมพ์ <code>/excel-review-agent</code> เพื่อตรวจคุณภาพ TCM<br>ถ้ามี 🔴 Critical Issues → แก้ก่อน ระบบจะ block ไม่ให้รัน test</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:#F0F7FF;border-radius:8px;border-left:4px solid #2E75B6">
+              <div style="font-size:22px;min-width:36px;text-align:center">5️⃣</div>
+              <div>
+                <div style="font-weight:700;margin-bottom:4px">รัน Playwright Tests</div>
+                <div style="font-size:12.5px;color:var(--muted)">พิมพ์ <code>/test</code> (ทุก test บน UAT) หรือ <code>/test-tag @smoke</code> (เฉพาะ smoke)<br>ระบบ pre-check ว่า BASE_URL เข้าถึงได้ก่อนรันเสมอ</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:#F0F7FF;border-radius:8px;border-left:4px solid #2E75B6">
+              <div style="font-size:22px;min-width:36px;text-align:center">6️⃣</div>
+              <div>
+                <div style="font-weight:700;margin-bottom:4px">ขอ Release Approval</div>
+                <div style="font-size:12.5px;color:var(--muted)">พิมพ์ <code>/approve-release</code> — ระบบตรวจ 8 gate criteria อัตโนมัติ<br>สร้าง sign-off checklist ใน <code>docs/reviews/</code> พร้อมส่ง Slack notification</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:#F0F7FF;border-radius:8px;border-left:4px solid #2E75B6">
+              <div style="font-size:22px;min-width:36px;text-align:center">7️⃣</div>
+              <div>
+                <div style="font-weight:700;margin-bottom:4px">Generate Report และส่งทีม</div>
+                <div style="font-size:12.5px;color:var(--muted)">พิมพ์ <code>/report</code> สร้าง Word report → <code>/inject</code> ใส่ screenshot → <code>/report-send</code> ส่ง Email + Slack</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="card-title">🏗 สถาปัตยกรรมระบบ</div>
+          <pre style="background:#F8F9FA;padding:14px;border-radius:8px;font-size:12px;overflow-x:auto;line-height:1.7">┌─────────────────────────────────────────────────┐
+│  Claude Code CLI  (พิมพ์ /command)               │
+│                                                  │
+│  .claude/commands/  → slash commands             │
+│  .claude/agents/    → AI subagents               │
+│  scripts/           → Python pipeline scripts    │
+└────────────────────┬────────────────────────────┘
+                     │ อ่าน/เขียนไฟล์ + เรียก Hub API
+                     ▼
+┌─────────────────────────────────────────────────┐
+│  Hub UI  (หน้าเว็บนี้)  http://localhost:8080    │
+│                                                  │
+│  Dashboard · Pipeline · Bugs · Release           │
+│  run_history.json  bugs/*.json  config.json      │
+└─────────────────────────────────────────────────┘</pre>
+        </div>
+      </div>
+
+      <!-- ── Daily Route ── -->
+      <div id="gtab-daily-route" class="guide-panel" style="display:none">
+        <div class="card">
+          <div class="card-title">🌅 Daily Route — รอบทำงานต่อวัน</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:16px">
+            QA cycle ที่แนะนำ — ทำตาม route นี้ทุกเช้าจะรู้สถานะระบบทั้งหมดใน 5–10 นาที
+          </div>
+
+          <h4 style="margin-top:8px">☀️ เช้า (08:00–09:00) — ตรวจผลรอบกลางคืน</h4>
+          <ol style="line-height:1.8;font-size:13.5px;color:var(--text)">
+            <li>เปิด Dashboard → ดู scheduled run ของเมื่อคืน (default 02:00 บาง project) — pass/fail rate ของ <code>@smoke</code> หรือ <code>slow and statemod</code></li>
+            <li>ถ้ามีสีแดง → Pipeline → Run History → เปิด log → ระบุ root cause<br>
+              <span style="color:var(--muted);font-size:12px">สำหรับ desktop-automation: ใช้ <code>/test-triage</code> ใน Claude Code</span></li>
+            <li>Bug Tracker → ดู Critical / High ที่ Open — อัปเดต assignee + status</li>
+          </ol>
+
+          <h4 style="margin-top:18px">☕ ระหว่างวัน — Develop + Iterate</h4>
+          <ol style="line-height:1.8;font-size:13.5px;color:var(--text)">
+            <li><code>/write-req &lt;slug&gt; &lt;input&gt;</code> → <code>requirements/&lt;slug&gt;.md</code> (resolve open questions) → <code>/generate-spec &lt;slug&gt;</code> สร้าง test file</li>
+            <li>ก่อน commit → <code>python scripts/pre_commit_check.py</code> (pytest collect + lint + spec↔test pairing)</li>
+            <li>Push → GitHub Actions รัน default suite อัตโนมัติ → ผลขึ้น hub ถ้า set <code>HUB_URL</code></li>
+            <li>ระหว่าง dev → Pipeline → Stage 5 ▶ <b>Run</b> ทดสอบสด</li>
+          </ol>
+
+          <h4 style="margin-top:18px">🌙 ก่อนกลับ (17:00–18:00) — Schedule + Release</h4>
+          <ol style="line-height:1.8;font-size:13.5px;color:var(--text)">
+            <li>Slow test ใหม่ → Schedule tab → <b>+ Add</b> → daily off-peak (เช่น 02:00) ด้วย tag <code>slow and statemod</code></li>
+            <li>ถ้าจะ release → Release Gate → ตรวจทุก criterion เป็น <span class="verdict-pill GO" style="font-size:11px">GO</span></li>
+            <li>License monitor (desktop-automation): <code>python scripts/check_license_expiry.py</code> → warn ที่ ≤ 30 วัน</li>
+          </ol>
+
+          <h4 style="margin-top:18px">📅 รายสัปดาห์ — Audit + Cleanup</h4>
+          <ol style="line-height:1.8;font-size:13.5px;color:var(--text)">
+            <li><code>/coverage-gap</code> ใน Claude Code → audit requirement ↔ test pairing + TCID coverage</li>
+            <li><code>/hub-structure-check</code> → จับ tech debt / drift ของ hub เอง</li>
+            <li><code>python scripts/cleanup_logs.py</code> → prune logs (7d) + screenshots (30d)</li>
+          </ol>
+
+          <div class="callout tip" style="margin-top:20px">
+            💡 <b>เป้าหมาย:</b> สถานะระบบทั้งหมดต้อง green ก่อนคืนนี้ → schedule วิ่งคืนต่อไป → เช้าได้เห็นสีแดง/เขียวก่อนเริ่มงาน → loop กลับ
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Pipeline Stages ── -->
+      <div id="gtab-pipeline" class="guide-panel" style="display:none">
+        <div class="card">
+          <div class="card-title">⚡ Pipeline Stages</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:16px">แต่ละ project type ใช้ stages ต่างกัน</div>
+
+          <table class="ts-table">
+            <thead><tr><th>#</th><th>Stage</th><th>full-pipeline</th><th>manual-testing</th><th>playwright-only</th><th>pytest-only</th></tr></thead>
+            <tbody>
+              <tr style="background:#F1F8E9">
+                <td>0</td>
+                <td>🔍 Explore Survey Paths <span style="font-size:11px;color:#558B2F;font-weight:600">(optional — survey app เท่านั้น)</span><br>
+                  <span style="font-size:11px;color:var(--muted)">Playwright MCP เดิน survey ทุก branch → survey_map.md + FLOW.md<br>ข้ามได้ถ้าไม่ใช่ survey app หรือมี requirement.md ครบแล้ว</span>
+                </td>
+                <td style="text-align:center">⭕</td><td style="text-align:center">—</td><td style="text-align:center">—</td><td style="text-align:center">—</td>
+              </tr>
+              <tr><td>1</td><td>📁 เตรียมไฟล์ Input (requirements/ หรือ figma/)</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">—</td><td style="text-align:center">—</td></tr>
+              <tr><td>2</td><td>🤖 BA Agent — วิเคราะห์ requirements ทั้งหมดใน requirements/</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">—</td><td style="text-align:center">—</td></tr>
+              <tr><td>3</td><td>📊 Review Excel + Add Charts</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">—</td><td style="text-align:center">—</td></tr>
+              <tr><td>4</td><td>🎭 Generate Playwright Spec Files</td><td style="text-align:center">✅</td><td style="text-align:center">—</td><td style="text-align:center">—</td><td style="text-align:center">—</td></tr>
+              <tr><td>5</td><td>▶ Run Tests + บันทึก Screenshots</td><td style="text-align:center">✅</td><td style="text-align:center">—</td><td style="text-align:center">✅</td><td style="text-align:center">✅ <span style="font-size:10px;color:var(--muted)">(pytest)</span></td></tr>
+              <tr><td>6</td><td>🖼 Screenshot Injection</td><td style="text-align:center">✅</td><td style="text-align:center">—</td><td style="text-align:center">—</td><td style="text-align:center">—</td></tr>
+              <tr><td>7</td><td>📄 Generate Word Report / pytest-html</td><td style="text-align:center">✅ <span style="font-size:10px;color:var(--muted)">(docx)</span></td><td style="text-align:center">✅ <span style="font-size:10px;color:var(--muted)">(docx)</span></td><td style="text-align:center">—</td><td style="text-align:center">✅ <span style="font-size:10px;color:var(--muted)">(html)</span></td></tr>
+              <tr><td>8</td><td>👁 Open / Download Report</td><td style="text-align:center">✅</td><td style="text-align:center">✅</td><td style="text-align:center">—</td><td style="text-align:center">✅</td></tr>
+            </tbody>
+          </table>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:8px">⭕ = optional &nbsp;·&nbsp; ✅ = ใช้งาน &nbsp;·&nbsp; — = ไม่ใช้</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">
+            🐍 <b>pytest-only</b> — Python pytest projects (e.g. Electron via CDP, Appium). Hub spawns the project's own
+            <code>.venv/Scripts/python.exe -m pytest --junitxml=... --html=...</code> and parses junit to populate run_history automatically.
+          </div>
+
+          <div class="divider"></div>
+          <div class="card-title">📂 โครงสร้างโฟลเดอร์</div>
+          <pre style="background:#F8F9FA;padding:14px;border-radius:8px;font-size:12px;overflow-x:auto;line-height:1.7">project/
+  input/          ← วาง Excel TCM ที่นี่
+  output/         ← Word report ที่ generate แล้ว
+  screenshots/    ← Playwright screenshots
+  templates/      ← Excel & Word templates
+  scripts/        ← Python pipeline scripts
+  tests/e2e/      ← Playwright test specs
+    data/         ← test-data.json (boundary, equivalence values)
+  logs/           ← BA output JSON, run logs
+  requirements/   ← requirement docs (.md / .txt)
+  figma/          ← Figma export images
+  docs/reviews/   ← TCM review, cross-review, traceability, approval records
+  docs/           ← distribution.json (email/Slack config)</pre>
+        </div>
+      </div>
+
+      <!-- ── Commands ── -->
+      <div id="gtab-commands" class="guide-panel" style="display:none">
+        <div class="card">
+          <div class="card-title" style="display:flex;align-items:center;gap:8px">
+            💬 Slash Commands — รายการคำสั่งทั้งหมด
+            <span id="cmd-badge" style="font-size:11px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;padding:2px 8px;border-radius:10px;font-weight:600"></span>
+            <button class="btn btn-sm" style="margin-left:auto;background:#F0F4F8;color:var(--muted);border:1px solid var(--border);font-size:11px" onclick="loadCommandsGuide()">🔄 Refresh</button>
+          </div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:12px">
+            พิมพ์ใน <b>Claude Code CLI</b> — อ่านจาก <code>.claude/commands/</code> ของ project ที่ลงทะเบียนไว้ใน Hub <span style="font-size:11px">(อัปเดตอัตโนมัติเมื่อเพิ่ม command ใหม่)</span>
+          </div>
+          <div id="commands-guide-body"><div style="color:var(--muted);font-size:13px">Loading...</div></div>
+        </div>
+      </div>
+
+      <!-- ── Agents ── -->
+      <div id="gtab-agents" class="guide-panel" style="display:none">
+        <div class="card">
+          <div class="card-title">🤖 AI Agents — ใครทำอะไร</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Agents คือ AI ผู้เชี่ยวชาญเฉพาะด้าน — Claude Code เรียกใช้อัตโนมัติตาม context</div>
+
+          <div style="display:grid;gap:12px">
+
+            <div style="border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <span style="font-size:20px">📝</span>
+                <div>
+                  <div style="font-weight:700">BA Agent</div>
+                  <div style="font-size:11.5px;color:var(--muted)">Business Analyst — วิเคราะห์ requirements</div>
+                </div>
+              </div>
+              <div style="font-size:12.5px;line-height:1.8">
+                <b>เรียกใช้เมื่อ:</b> มี requirements ใหม่ หรือต้องการแปลง Figma/doc → TCM<br>
+                <b>Input:</b> .md / .txt / Figma image / User Story<br>
+                <b>Output:</b> <code>logs/ba_output_YYYYMMDD.json</code> + สร้าง <code>input/*.xlsx</code><br>
+                <b>Command:</b> <code>/ba-agent [file]</code>
+              </div>
+            </div>
+
+            <div style="border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <span style="font-size:20px">🧪</span>
+                <div>
+                  <div style="font-weight:700">QA Agent</div>
+                  <div style="font-size:11.5px;color:var(--muted)">QA Specialist — 6 modes</div>
+                </div>
+              </div>
+              <div style="font-size:12.5px;line-height:1.8">
+                <b>Modes:</b><br>
+                • <code>TCM_GENERATE</code> — สร้าง Excel TCM จาก BA Output<br>
+                • <code>COVERAGE_CHECK</code> — ตรวจว่า spec ครอบ TCM ครบไหม<br>
+                • <code>RISK_ANALYSIS</code> — จัดลำดับ test cases ตามความเสี่ยง<br>
+                • <code>TEST_DATA</code> — ออกแบบ test data (boundary, equivalence) + สร้าง test-data.json<br>
+                • <code>BUG_REPORT</code> — สร้าง bug report จาก Playwright failure<br>
+                • <code>TRACEABILITY</code> — สร้าง Requirement ↔ TC ↔ Result matrix
+              </div>
+            </div>
+
+            <div style="border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <span style="font-size:20px">🎭</span>
+                <div>
+                  <div style="font-weight:700">Playwright Agent</div>
+                  <div style="font-size:11.5px;color:var(--muted)">Test Automation Engineer</div>
+                </div>
+              </div>
+              <div style="font-size:12.5px;line-height:1.8">
+                <b>เรียกใช้เมื่อ:</b> เขียน/รัน/แก้ Playwright spec<br>
+                <b>Tags ที่รองรับ:</b> <code>@smoke</code> · <code>@e2e</code> · <code>@regression</code> · <code>@visual</code><br>
+                <b>Flaky detection:</b> test ที่ pass หลัง retry = flaky — ถ้า ≥ 3 runs = blocker<br>
+                <b>ENV support:</b> <code>TEST_ENV=uat|prod</code> ส่งผ่าน env var
+              </div>
+            </div>
+
+            <div style="border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <span style="font-size:20px">📊</span>
+                <div>
+                  <div style="font-weight:700">Excel Review Agent</div>
+                  <div style="font-size:11.5px;color:var(--muted)">TCM Quality Gate</div>
+                </div>
+              </div>
+              <div style="font-size:12.5px;line-height:1.8">
+                <b>ตรวจ:</b> Structural integrity · TC quality · Requirement traceability<br>
+                <b>Output:</b> <code>docs/reviews/tcm_review_YYYYMMDD.md</code><br>
+                <b>Enforcement:</b> ถ้ามี 🔴 Critical Issues → <b>บล็อก</b> ไม่ให้ generate report หรือรัน test<br>
+                <b>Command:</b> <code>/excel-review-agent</code>
+              </div>
+            </div>
+
+            <div style="border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <span style="font-size:20px">🔍</span>
+                <div>
+                  <div style="font-weight:700">Cross Review Agent</div>
+                  <div style="font-size:11.5px;color:var(--muted)">Layer-by-layer gap checker</div>
+                </div>
+              </div>
+              <div style="font-size:12.5px;line-height:1.8">
+                <b>ตรวจ:</b> Requirements → BA Output → TCM → Playwright Spec → Test Results<br>
+                <b>Output:</b> <code>docs/reviews/cross_review_YYYYMMDD.md</code><br>
+                <b>Release Readiness:</b> 9 criteria รวมถึง TCM Review gate, flaky detection, ENV smoke run<br>
+                <b>เรียกใช้เมื่อ:</b> ก่อน release หรือเมื่อ pass rate &lt; 80%
+              </div>
+            </div>
+
+            <div style="border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <span style="font-size:20px">🚀</span>
+                <div>
+                  <div style="font-weight:700">Release Approval Agent</div>
+                  <div style="font-size:11.5px;color:var(--muted)">Formal sign-off workflow</div>
+                </div>
+              </div>
+              <div style="font-size:12.5px;line-height:1.8">
+                <b>ตรวจ 8 gate criteria:</b> TCM Review · Cross Review · Traceability · Pass Rate · No Critical/High Bug · Screenshot Coverage · ENV Smoke Run<br>
+                <b>Output:</b> <code>docs/reviews/release_approval_YYYYMMDD.md</code> (sign-off table)<br>
+                <b>Notification:</b> ส่ง Slack แจ้ง QA Lead / PM ให้ sign-off<br>
+                <b>Command:</b> <code>/approve-release</code>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Release Workflow ── -->
+      <div id="gtab-release-wf" class="guide-panel" style="display:none">
+        <div class="card">
+          <div class="card-title">🚦 Release Workflow — ขั้นตอน Release ฉบับสมบูรณ์</div>
+
+          <div style="display:grid;gap:10px;margin-bottom:20px">
+            <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:8px;background:#F1F8E9;border-left:4px solid #43A047">
+              <code style="min-width:180px;font-size:12px">/test-tag @e2e</code>
+              <div style="font-size:12.5px">รัน E2E test suite → ตรวจ pass rate ≥ 80%<br><span style="color:var(--muted)">ENV pre-check อัตโนมัติก่อนรัน</span></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:8px;background:#F1F8E9;border-left:4px solid #43A047">
+              <code style="min-width:180px;font-size:12px">/excel-review-agent</code>
+              <div style="font-size:12.5px">ตรวจ TCM quality → บันทึก tcm_review_*.md<br><span style="color:var(--muted)">ถ้ามี Critical Issues → แก้ก่อนดำเนินการต่อ</span></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:8px;background:#F1F8E9;border-left:4px solid #43A047">
+              <code style="min-width:180px;font-size:12px">/cross-review</code>
+              <div style="font-size:12.5px">ตรวจ gaps ทุก layer (BA → TCM → Spec → Results)<br><span style="color:var(--muted)">บันทึก cross_review_*.md พร้อม Release Readiness status</span></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:8px;background:#F1F8E9;border-left:4px solid #43A047">
+              <code style="min-width:180px;font-size:12px">/traceability --save</code>
+              <div style="font-size:12.5px">สร้าง Requirement ↔ TC ↔ Result matrix<br><span style="color:var(--muted)">บันทึก traceability_*.md สำหรับ audit trail</span></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:8px;background:#E3F2FD;border-left:4px solid #1976D2">
+              <code style="min-width:180px;font-size:12px">/approve-release</code>
+              <div style="font-size:12.5px"><b>ตรวจ 8 gate criteria อัตโนมัติ</b><br>สร้าง release_approval_*.md + ส่ง Slack ขอ sign-off<br><span style="color:var(--muted)">QA Lead / PM กรอก sign-off ในไฟล์ที่ได้รับ</span></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:8px;background:#F3E5F5;border-left:4px solid #7B1FA2">
+              <code style="min-width:180px;font-size:12px">/report</code>
+              <div style="font-size:12.5px">Generate Word report จาก TCM + test results</div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:8px;background:#F3E5F5;border-left:4px solid #7B1FA2">
+              <code style="min-width:180px;font-size:12px">/inject</code>
+              <div style="font-size:12.5px">Inject screenshots เข้า Word report</div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:8px;background:#F3E5F5;border-left:4px solid #7B1FA2">
+              <code style="min-width:180px;font-size:12px">/report-send</code>
+              <div style="font-size:12.5px">ส่ง report ผ่าน Email + Slack ให้ทีม</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="card-title">🚦 Release Gate — 8 Criteria</div>
+          <table class="ts-table">
+            <thead><tr><th>#</th><th>Criteria</th><th>ผ่านเมื่อ</th><th>ตรวจโดย</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>TCM Review ผ่าน</td><td>ไม่มี 🔴 Critical Issues</td><td>Excel Review Agent</td></tr>
+              <tr><td>2</td><td>Cross Review ผ่าน</td><td>Status = READY</td><td>Cross Review Agent</td></tr>
+              <tr><td>3</td><td>Traceability ≥ 80%</td><td>Coverage ≥ 80%</td><td>QA Agent (TRACEABILITY)</td></tr>
+              <tr><td>4</td><td>Pass Rate ≥ 80%</td><td>last run pass% ≥ 80</td><td>Hub run_history</td></tr>
+              <tr><td>5</td><td>No Critical Bug</td><td>open Critical = 0</td><td>Hub Bug Tracker</td></tr>
+              <tr><td>6</td><td>No High Bug</td><td>open High = 0</td><td>Hub Bug Tracker</td></tr>
+              <tr><td>7</td><td>Screenshot Coverage</td><td>screenshots ≥ 80% ของ TCID</td><td>screenshots/ folder</td></tr>
+              <tr><td>8</td><td>ENV Smoke Run</td><td>@smoke UAT ผ่านภายใน 7 วัน</td><td>Hub run_history</td></tr>
+            </tbody>
+          </table>
+
+          <div class="divider"></div>
+          <div class="card-title">🏷 Tag Strategy</div>
+          <table class="ts-table">
+            <thead><tr><th>Tag</th><th>ใช้เมื่อ</th><th>รัน ENV</th><th>ความถี่</th></tr></thead>
+            <tbody>
+              <tr><td><code>@smoke</code></td><td>ตรวจ critical path รวดเร็ว</td><td>UAT + Prod</td><td>ทุก deploy</td></tr>
+              <tr><td><code>@e2e</code></td><td>ทดสอบ flow หลักครบ</td><td>UAT</td><td>ก่อน release</td></tr>
+              <tr><td><code>@regression</code></td><td>ทดสอบ regression ทั้งหมด</td><td>UAT</td><td>ทุก sprint</td></tr>
+              <tr><td><code>@visual</code></td><td>ตรวจ UI layout</td><td>UAT</td><td>เมื่อ UI เปลี่ยน</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Setup ── -->
+      <div id="gtab-syscheck-guide" class="guide-panel" style="display:none">
+        <div class="card">
+          <div class="card-title">🩺 System Check & Mock Testing</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:16px">ตรวจสอบความพร้อมของระบบและทดสอบ pipeline ด้วย mock data โดยไม่กระทบ project จริง</div>
+
+          <div class="card-title" style="font-size:12px;color:var(--muted);margin-top:0">🩺 System Check (บน Hub)</div>
+          <div style="font-size:12.5px;margin-bottom:8px">ไปที่ Sidebar → <b>System Check</b> → กด <b>▶ Run Check</b></div>
+          <div style="font-size:12.5px;margin-bottom:12px">ระบบจะตรวจสอบ 8 รายการอัตโนมัติ:</div>
+          <table class="ts-table" style="font-size:12px">
+            <thead><tr><th>#</th><th>Check</th><th>ตรวจอะไร</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Python Dependencies</td><td>flask, openpyxl, python-docx, pandas, lxml, watchdog</td></tr>
+              <tr><td>2</td><td>Node.js / npx</td><td>npx version</td></tr>
+              <tr><td>3</td><td>Hub Config</td><td>config.json readable, project count</td></tr>
+              <tr><td>4</td><td>Mock Projects</td><td>_mock-manual/ + _mock-full/ exist</td></tr>
+              <tr><td>5</td><td>Generate TCM</td><td>run create_mock_tcm.py (10 TCs)</td></tr>
+              <tr><td>6</td><td>Generate Report</td><td>run generate_report.py (.docx output)</td></tr>
+              <tr><td>7</td><td>SMTP Connection</td><td>login SMTP dry-run (no email sent)</td></tr>
+              <tr><td>8</td><td>Run History</td><td>run_history.json read/write</td></tr>
+            </tbody>
+          </table>
+
+          <div class="divider"></div>
+          <div class="card-title" style="font-size:12px;color:var(--muted)">🧪 Mock Projects (CLI)</div>
+          <div style="font-size:12.5px;margin-bottom:8px">Mock projects แยก 2 ตัวสำหรับทดสอบ pipeline + email ส่งจริง:</div>
+          <table class="ts-table" style="font-size:12px">
+            <thead><tr><th>Project</th><th>Type</th><th>Scenarios</th></tr></thead>
+            <tbody>
+              <tr><td><code>_mock-manual</code></td><td>manual-testing</td><td><code>pass</code> (100%) · <code>fail</code> (67%)</td></tr>
+              <tr><td><code>_mock-full</code></td><td>full-pipeline</td><td><code>pass</code> (95%) · <code>fail</code> (50%)</td></tr>
+            </tbody>
+          </table>
+          <pre style="background:#F8F9FA;padding:12px;border-radius:8px;font-size:12px;overflow-x:auto;margin-top:10px"># Manual Testing — send email
+cd C:/Automation/_mock-manual
+./tests/mockup/run_mock.sh --scenario pass         # Email: PASSED
+./tests/mockup/run_mock.sh --scenario fail          # Email: FAILED
+
+# Full Pipeline — send email
+cd C:/Automation/_mock-full
+./tests/mockup/run_mock.sh --scenario pass          # Email: PASSED
+./tests/mockup/run_mock.sh --scenario fail           # Email: FAILED
+
+# Options
+--no-send    # generate report only, no email
+--clean      # delete output + logs before run</pre>
+
+          <div class="divider"></div>
+          <div class="card-title" style="font-size:12px;color:var(--muted)">📧 Email ที่ได้รับ</div>
+          <table class="ts-table" style="font-size:12px">
+            <thead><tr><th>Scenario</th><th>Subject</th></tr></thead>
+            <tbody>
+              <tr><td>manual pass</td><td>[PASSED] UAT Report — MOCK Manual Testing | Pass Rate 100%</td></tr>
+              <tr><td>manual fail</td><td>[FAILED] UAT Report — MOCK Manual Testing | Pass Rate 73%</td></tr>
+              <tr><td>full pass</td><td>[PASSED] UAT Report — MOCK Full Pipeline | Pass Rate 95%</td></tr>
+              <tr><td>full fail</td><td>[FAILED] UAT Report — MOCK Full Pipeline | Pass Rate 58%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="gtab-setup" class="guide-panel" style="display:none">
+        <div class="card">
+          <div class="card-title">⚙️ Setup — ตั้งค่าก่อนใช้งาน</div>
+
+          <div class="card-title" style="font-size:12px;color:var(--muted);margin-top:0">📦 ติดตั้ง Dependencies</div>
+          <pre style="background:#F8F9FA;padding:12px;border-radius:8px;font-size:12px;overflow-x:auto">pip install flask openpyxl python-docx pandas lxml watchdog python-dotenv requests
+npm install  # ใน project folder (ติดตั้ง Playwright)
+npx playwright install</pre>
+
+          <div class="divider"></div>
+          <div class="card-title" style="font-size:12px;color:var(--muted)">📧 ตั้งค่า Email (SMTP)</div>
+          <div style="font-size:12.5px;margin-bottom:8px">แก้ไขไฟล์ <code>docs/distribution.json</code> ใน project folder:</div>
+          <pre style="background:#F8F9FA;padding:12px;border-radius:8px;font-size:12px;overflow-x:auto">{
+  "report_recipients": ["qa@company.com", "pm@company.com"],
+  "smtp": {
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "user": "your@gmail.com",
+    "password": "xxxx-xxxx-xxxx-xxxx"  // Gmail App Password
+  }
+}</pre>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">Gmail App Password: myaccount.google.com → Security → App passwords</div>
+
+          <div class="divider"></div>
+          <div class="card-title" style="font-size:12px;color:var(--muted)">💬 ตั้งค่า Slack Webhook</div>
+          <div style="font-size:12.5px;margin-bottom:8px">เพิ่ม Slack webhook ใน <code>docs/distribution.json</code>:</div>
+          <pre style="background:#F8F9FA;padding:12px;border-radius:8px;font-size:12px;overflow-x:auto">{
+  "slack_webhook": "https://hooks.slack.com/services/T.../B.../...",
+  "slack_channel": "#qa-reports"
+}</pre>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">สร้าง webhook: api.slack.com/messaging/webhooks → Create new app → Incoming Webhooks</div>
+
+          <div class="divider"></div>
+          <div class="card-title" style="font-size:12px;color:var(--muted)">🔄 Sync Scaffold ไปยัง Project</div>
+          <div style="font-size:12.5px;margin-bottom:8px">เมื่ออัปเดต agents หรือ commands ใน Hub:</div>
+          <pre style="background:#F8F9FA;padding:12px;border-radius:8px;font-size:12px;overflow-x:auto">cd ~/Desktop/qa-hub-saucedemo
+python sync_agents.py --project bay-voc          # sync project เดียว
+python sync_agents.py --project bay-voc --force  # force overwrite
+python sync_agents.py                            # sync ทุก active project
+python sync_agents.py --dry-run                  # preview ก่อน sync</pre>
+
+          <div class="divider"></div>
+          <div class="card-title" style="font-size:12px;color:var(--muted)">📍 เปิด Claude Code จาก folder ที่ถูกต้อง</div>
+          <table class="ts-table">
+            <thead><tr><th>ต้องการทำ</th><th>cd ไปที่</th><th>Commands ที่ใช้ได้</th></tr></thead>
+            <tbody>
+              <tr><td>รัน test / เขียน spec / สร้าง report</td><td><code>C:\Automation\BAY\e2e-surveys-bay</code></td><td><code>/test</code> <code>/report</code> <code>/ba-agent</code> ฯลฯ</td></tr>
+              <tr><td>จัดการ Hub, sync, cross-project</td><td><code>~/Desktop/qa-hub-saucedemo</code></td><td><code>/hub-status</code> <code>/hub-report</code> <code>/sync-agents</code></td></tr>
+            </tbody>
+          </table>
+
+          <div class="divider"></div>
+          <div class="card-title" style="font-size:12px;color:var(--muted)">🏷 เพิ่ม Tag ใน Playwright Test</div>
+          <pre style="background:#F8F9FA;padding:12px;border-radius:8px;font-size:12px;overflow-x:auto">// ใส่ tag ใน test title
+test('TS_01_01 @smoke @e2e: NPS scale แสดงผลครบ 0–10', async ({ survey }) => {
+  ...
+})
+
+// รัน tag เดียว
+/test-tag @smoke
+
+// รัน หลาย tag
+/test-tag @e2e --env prod</pre>
+        </div>
+      </div>
+
+    </div>
+    <!-- ══ END GUIDE ══════════════════════════════════════════════ -->
+
+    <!-- ══ ABOUT ═════════════════════════════════════════════════ -->
+    <div id="section-about" class="section">
+
+      <!-- Hub Health Snapshot (auto-refresh) -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title" style="display:flex;align-items:center;gap:8px">
+          🩺 Hub Health
+          <span id="hub-health-summary" style="font-size:12px;color:var(--muted);font-weight:400"></span>
+          <button class="btn btn-sm" onclick="loadHubHealth()" title="Refresh" style="margin-left:auto;background:var(--bg);color:var(--muted);border:1px solid var(--border);font-size:13px">↻</button>
+        </div>
+        <div id="hub-health-body" style="padding:6px 0"></div>
+      </div>
+
+      <!-- Branding editor -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">🎨 White-Label / Branding</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">ปรับชื่อ logo และสี — บันทึกใน <code>config.json</code> ใช้ได้ทันที</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-bottom:14px">
+
+          <div>
+            <label style="font-size:11.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">ชื่อระบบ (App Name)</label>
+            <input id="br-app-name" type="text" placeholder="QA Hub Demo" style="width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;box-sizing:border-box">
+          </div>
+
+          <div>
+            <label style="font-size:11.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Subtitle</label>
+            <input id="br-subtitle" type="text" placeholder="Multi-Project Dashboard" style="width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;box-sizing:border-box">
+          </div>
+
+          <div>
+            <label style="font-size:11.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Logo (emoji หรือข้อความ)</label>
+            <input id="br-logo" type="text" placeholder="🔬" maxlength="8" style="width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;box-sizing:border-box">
+          </div>
+
+          <div>
+            <label style="font-size:11.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Logo URL <span style="font-weight:400">(รูป PNG/SVG — แทน emoji)</span></label>
+            <input id="br-logo-url" type="url" placeholder="https://company.com/logo.png" style="width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;box-sizing:border-box">
+          </div>
+
+          <div>
+            <label style="font-size:11.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Primary Color</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="br-color-pick" type="color" value="#1A2D4E" style="width:40px;height:34px;border-radius:6px;border:1px solid var(--border);cursor:pointer;padding:2px" oninput="document.getElementById('br-color-text').value=this.value">
+              <input id="br-color-text" type="text" placeholder="#1A2D4E" maxlength="7" style="flex:1;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;box-sizing:border-box" oninput="syncColorPick(this.value)">
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size:11.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">ชื่อบริษัท (แสดงใน footer)</label>
+            <input id="br-company" type="text" placeholder="QA Hub Demo Co., Ltd." style="width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;box-sizing:border-box">
+          </div>
+
+        </div>
+
+        <!-- Preview -->
+        <div style="background:#F8F9FA;border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Preview</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div id="br-preview-logo" style="font-size:24px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--primary-dk)">🔬</div>
+            <div>
+              <div id="br-preview-name" style="font-weight:700;font-size:15px">QA Hub Demo</div>
+              <div id="br-preview-sub" style="font-size:11px;color:var(--muted)">Multi-Project Dashboard</div>
+            </div>
+          </div>
+          <div id="br-preview-footer" style="margin-top:8px;font-size:11.5px;color:var(--muted)">QA Hub Demo v1.0 · Central Dashboard</div>
+        </div>
+
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="saveBranding()">💾 บันทึก Branding</button>
+          <button class="btn btn-sm" onclick="resetBranding()" style="background:#FFF3E0;color:#E65100;border:1px solid #FFCC80">↺ Reset Default</button>
+        </div>
+      </div>
+
+      <!-- Email Settings -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">📧 Email Settings</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">ตั้งค่า Email provider + ผู้รับ report — บันทึกแล้ว sync ไปทุก project อัตโนมัติ</div>
+
+        <!-- Provider toggle -->
+        <div style="display:flex;gap:6px;margin-bottom:16px">
+          <button class="btn btn-sm em-prov-btn" id="em-prov-smtp" onclick="switchEmailProvider('smtp')" style="background:var(--primary);color:#fff;border:1px solid var(--primary)">📮 SMTP</button>
+          <button class="btn btn-sm em-prov-btn" id="em-prov-resend" onclick="switchEmailProvider('resend')" style="background:#F0F4F8;color:var(--text);border:1px solid var(--border)">⚡ Resend API</button>
+        </div>
+
+        <!-- SMTP fields -->
+        <div id="em-smtp-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-bottom:14px">
+          <div class="form-field"><label>SMTP Host</label><input id="em-host" type="text" placeholder="smtp.gmail.com"></div>
+          <div class="form-field"><label>SMTP Port</label><input id="em-port" type="number" value="587" style="width:100px"></div>
+          <div class="form-field"><label>Username (Email)</label><input id="em-user" type="email" placeholder="user@gmail.com"></div>
+          <div class="form-field"><label>Password (App Password)</label><input id="em-pass" type="password" placeholder="xxxx xxxx xxxx xxxx"></div>
+        </div>
+
+        <!-- Resend fields -->
+        <div id="em-resend-fields" style="display:none;margin-bottom:14px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px">
+            <div class="form-field"><label>Resend API Key</label><input id="em-resend-key" type="password" placeholder="re_xxxxxxxxxx"></div>
+            <div class="form-field"><label>From Address</label><input id="em-resend-from" type="text" placeholder="QA Hub <noreply@yourdomain.com>"></div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">สมัครฟรี: <a href="https://resend.com" target="_blank" style="color:var(--primary)">resend.com</a> — Free 3,000 emails/month · ใช้ API Key ตัวเดียว</div>
+        </div>
+
+        <!-- Common fields -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-bottom:14px">
+          <div class="form-field"><label>Sender Name</label><input id="em-sender" type="text" placeholder="F180 QA Hub"></div>
+          <div class="form-field"><label>Subject Template</label><input id="em-subject" type="text" placeholder="[{result}] UAT Report — {project} | {date} | Pass Rate {pass_rate}%"></div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">📨 To (ผู้รับ report)</label>
+          <div id="em-to-list"></div>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <input id="em-to-name" type="text" placeholder="Name" style="flex:1">
+            <input id="em-to-email" type="email" placeholder="email@example.com" style="flex:1">
+            <button class="btn btn-sm btn-success" onclick="addEmailRecipient('to')">+ Add</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">📋 CC (optional)</label>
+          <div id="em-cc-list"></div>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <input id="em-cc-name" type="text" placeholder="Name" style="flex:1">
+            <input id="em-cc-email" type="email" placeholder="email@example.com" style="flex:1">
+            <button class="btn btn-sm btn-success" onclick="addEmailRecipient('cc')">+ Add</button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="saveEmailSettings()">💾 บันทึก Email</button>
+          <button class="btn btn-sm" onclick="testEmailConnection()" id="em-test-btn" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9">🔌 Test Connection</button>
+          <span id="em-test-result" style="font-size:12px;display:flex;align-items:center"></span>
+        </div>
+      </div>
+
+      <!-- Chat Notifications (Slack / Teams / Discord) -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">🔔 Chat Notifications</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">
+          ส่ง webhook ไป Slack / Teams / Discord เมื่อ scheduled run เสร็จ — เว้นว่างเพื่อปิด service นั้น
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
+          <div class="form-field">
+            <label style="display:flex;justify-content:space-between;align-items:center">
+              <span>💬 Slack Webhook URL</span>
+              <button class="btn btn-sm" onclick="testNotification('slack')" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;font-size:11px;padding:2px 8px">Test</button>
+            </label>
+            <input id="nf-slack" type="text" placeholder="https://hooks.slack.com/services/...">
+            <span id="nf-slack-result" style="font-size:11px;margin-left:6px"></span>
+          </div>
+          <div class="form-field">
+            <label style="display:flex;justify-content:space-between;align-items:center">
+              <span>👥 Microsoft Teams Webhook URL</span>
+              <button class="btn btn-sm" onclick="testNotification('teams')" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;font-size:11px;padding:2px 8px">Test</button>
+            </label>
+            <input id="nf-teams" type="text" placeholder="https://outlook.office.com/webhook/...">
+            <span id="nf-teams-result" style="font-size:11px;margin-left:6px"></span>
+          </div>
+          <div class="form-field">
+            <label style="display:flex;justify-content:space-between;align-items:center">
+              <span>🎮 Discord Webhook URL</span>
+              <button class="btn btn-sm" onclick="testNotification('discord')" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;font-size:11px;padding:2px 8px">Test</button>
+            </label>
+            <input id="nf-discord" type="text" placeholder="https://discord.com/api/webhooks/...">
+            <span id="nf-discord-result" style="font-size:11px;margin-left:6px"></span>
+          </div>
+        </div>
+
+        <div class="form-field" style="margin-bottom:14px">
+          <label>เมื่อไหร่ส่ง notification</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer">
+              <input type="radio" name="nf-on" value="error-only" id="nf-on-error">
+              เฉพาะ error (เข้มที่สุด)
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer">
+              <input type="radio" name="nf-on" value="fail-error" id="nf-on-fail" checked>
+              fail + error (default)
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer">
+              <input type="radio" name="nf-on" value="all" id="nf-on-all">
+              ทุก event (รวม success)
+            </label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveNotificationSettings()">💾 บันทึก Notifications</button>
+      </div>
+
+      <!-- AI Settings + Test Plan Generator -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">🤖 AI Test Plan Generator</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">
+          ใช้ Claude ช่วย draft test scenarios จาก requirement — เลือก provider ตามที่ตั้งไว้
+        </div>
+
+        <!-- Provider config -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-bottom:14px">
+          <div class="form-field">
+            <label>Provider</label>
+            <select id="ai-provider" class="proj-select" style="width:100%;color:var(--text);background:var(--card)">
+              <option value="cli">Claude CLI (ใช้ subscription ที่มี — ไม่มี API cost)</option>
+              <option value="api">Anthropic API (ต้อง API key + คิดค่าใช้จ่ายตาม tokens)</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Model (optional, default ใช้ provider default)</label>
+            <input id="ai-model" type="text" placeholder="claude-opus-4-7">
+          </div>
+        </div>
+        <div class="form-field" id="ai-api-key-wrap" style="margin-bottom:14px;display:none">
+          <label>API Key (เก็บใน config — เว้นว่างเพื่อใช้ ANTHROPIC_API_KEY env var)</label>
+          <input id="ai-api-key" type="password" placeholder="sk-ant-...">
+          <span id="ai-key-hint" style="font-size:11px;color:var(--muted);margin-left:6px"></span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:18px">
+          <button class="btn btn-primary" onclick="saveAiSettings()">💾 Save AI Settings</button>
+        </div>
+
+        <!-- Generate test plan -->
+        <hr style="border:none;border-top:1px solid var(--border);margin:8px 0 16px">
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:8px">
+          Paste requirement (markdown / plain text) แล้วกด Generate — Claude จะ draft test scenarios
+          กลับมา ให้คุณ review + edit ก่อนเอาไปใช้จริง
+        </div>
+        <textarea id="ai-req" rows="8" style="width:100%;padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:10px" placeholder="Paste requirement document here..."></textarea>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+          <button class="btn btn-primary" onclick="generateTestPlan()" id="ai-gen-btn">✨ Generate Test Plan</button>
+          <span id="ai-gen-status" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+        <div id="ai-output-wrap" style="display:none">
+          <div style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:flex;align-items:center">
+            Output
+            <button class="btn btn-sm" onclick="copyAiOutput()" style="margin-left:auto;background:var(--bg);color:var(--muted);border:1px solid var(--border);font-size:11px;padding:2px 8px">📋 Copy</button>
+          </div>
+          <pre id="ai-output" style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:12px;font-size:12.5px;font-family:'Cascadia Mono',monospace;white-space:pre-wrap;max-height:500px;overflow-y:auto"></pre>
+        </div>
+      </div>
+
+      <!-- Audit Log Viewer -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title" style="display:flex;align-items:center;gap:8px">
+          📋 Audit Log
+          <select id="audit-filter" onchange="loadAuditLog()" style="font-size:12px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);margin-left:auto">
+            <option value="">All actions</option>
+            <option value="project.">project.* (add/update/remove)</option>
+            <option value="schedule.">schedule.* (add/delete)</option>
+            <option value="config.">config.* (email/branding/notifications)</option>
+          </select>
+          <button class="btn btn-sm" onclick="loadAuditLog()" title="Refresh" style="background:var(--bg);color:var(--muted);border:1px solid var(--border);font-size:13px">↻</button>
+        </div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">
+          บันทึกทุก mutation บน Hub (add/update/delete) — ดูได้ว่าใครทำอะไรเมื่อไหร่
+        </div>
+        <div id="audit-body" style="max-height:420px;overflow-y:auto"></div>
+      </div>
+
+      <!-- Email Template Editor -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+          📝 Email Template
+          <div style="display:flex;gap:6px;align-items:center">
+            <select id="tpl-name" onchange="loadEmailTemplate()" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text)">
+              <option value="manual">Manual Testing</option>
+              <option value="playwright">Playwright</option>
+            </select>
+          </div>
+        </div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">
+          แก้ไข HTML template ของ email report — ใช้ตัวแปร Jinja2 เช่น <code>{<!-- -->{ project_name }}</code>, <code>{<!-- -->{ pass_rate }}</code>, <code>{%<!-- --> for s in suites %}</code>
+        </div>
+
+        <!-- Preview buttons -->
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="previewTemplate('pass')" style="background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7">👁 Preview Pass</button>
+          <button class="btn btn-sm" onclick="previewTemplate('fail')" style="background:#FFEBEE;color:#C62828;border:1px solid #EF9A9A">👁 Preview Fail</button>
+          <button class="btn btn-sm" onclick="toggleTplEditor()" id="tpl-edit-btn" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9">✏️ Edit Template</button>
+          <button class="btn btn-sm" onclick="resetTemplate()" style="background:#FFF3E0;color:#E65100;border:1px solid #FFCC80">↺ Reset Default</button>
+        </div>
+
+        <!-- Preview iframe -->
+        <div id="tpl-preview-wrap" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px;background:#F0F4F8">
+          <iframe id="tpl-preview" style="width:100%;height:520px;border:none" sandbox="allow-same-origin"></iframe>
+        </div>
+
+        <!-- Editor (hidden by default) -->
+        <div id="tpl-editor-wrap" style="display:none">
+          <textarea id="tpl-editor" style="width:100%;height:400px;font-family:'Consolas','Monaco',monospace;font-size:12px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);resize:vertical;tab-size:2" spellcheck="false"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn btn-primary btn-sm" onclick="saveTemplate()">💾 Save Template</button>
+            <button class="btn btn-sm" onclick="toggleTplEditor()" style="background:#F0F4F8;color:var(--muted);border:1px solid var(--border)">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Variable reference -->
+        <details style="margin-top:8px">
+          <summary style="font-size:12px;color:var(--muted);cursor:pointer;font-weight:600">📋 Available Variables</summary>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;font-size:11.5px;color:var(--muted);margin-top:8px;padding:10px;background:var(--bg);border-radius:6px">
+            <div><code>{<!-- -->{ project_name }}</code> — Project name</div>
+            <div><code>{<!-- -->{ date }}</code> — Current date</div>
+            <div><code>{<!-- -->{ pass_rate }}</code> — Pass rate %</div>
+            <div><code>{<!-- -->{ total }}</code> — Total test cases</div>
+            <div><code>{<!-- -->{ pass_count }}</code> — Pass count</div>
+            <div><code>{<!-- -->{ fail_count }}</code> — Fail count</div>
+            <div><code>{<!-- -->{ not_start_count }}</code> — Not started</div>
+            <div><code>{<!-- -->{ result_icon }}</code> — Pass/Fail icon</div>
+            <div><code>{<!-- -->{ result_label }}</code> — PASSED/FAILED</div>
+            <div><code>{<!-- -->{ greeting }}</code> — Greeting line</div>
+            <div><code>{<!-- -->{ intro_text }}</code> — Intro paragraph</div>
+            <div><code>{<!-- -->{ suites }}</code> — Loop: test suites</div>
+            <div><code>{<!-- -->{ failed_tcs }}</code> — Loop: failed TCs</div>
+            <div><code>{<!-- -->{ open_bugs }}</code> — Loop: open bugs</div>
+            <div><code>{<!-- -->{ runs }}</code> — Loop: run history</div>
+            <div><code>{<!-- -->{ footer_text }}</code> — Footer text</div>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <div class="card-title" id="about-app-title">About QA Hub Demo</div>
+        <table class="ts-table">
+          <tr><td style="font-weight:600;width:160px">Tool</td><td id="about-tool-name">QA Hub Demo — Central Multi-Project Dashboard</td></tr>
+          <tr><td style="font-weight:600">Version</td><td>1.0.0</td></tr>
+          <tr><td style="font-weight:600">Location</td><td><code>C:\Automation\_hub\app.py</code></td></tr>
+          <tr><td style="font-weight:600">Config</td><td><code>C:\Automation\_hub\config.json</code></td></tr>
+          <tr><td style="font-weight:600">Stack</td><td>Flask · openpyxl · Playwright · Python · python-docx · matplotlib</td></tr>
+          <tr><td style="font-weight:600">Project types</td><td>🔄 full-pipeline · 📋 manual-testing · 🎭 playwright-only</td></tr>
+          <tr><td style="font-weight:600">Project phases</td><td>🚀 active · 🗂 planning · ⏸ paused</td></tr>
+        </table>
+        <div class="divider"></div>
+        <div class="card-title">เพิ่ม Project ใหม่</div>
+        <div style="font-size:13px;line-height:2">
+          <b>วิธีที่ 1 — Auto Discover</b>: ไปที่ <b>Projects</b> → Add Project → <b>Auto Discover</b><br>
+          <b>วิธีที่ 2 — Manual</b>: กรอก ID, Name, Path ใน Add Project form<br>
+          <b>วิธีที่ 3 — แก้ config.json</b>: เปิด <code>_hub/config.json</code> แล้วเพิ่ม entry ใหม่
+        </div>
+        <div class="divider"></div>
+        <div class="card-title">Config</div>
+        <div class="btn-group">
+          <a id="export-config-link" href="/api/config/export" download="config.json">
+            <button class="btn btn-sm btn-dark">⬇️ Export config.json</button>
+          </a>
+          <label class="btn btn-sm" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;cursor:pointer">
+            📂 Import config.json
+            <input type="file" accept=".json" style="display:none" onchange="importConfig(this)">
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SCHEDULE ════════════════════════════════════════════════ -->
+    <div id="section-schedule" class="section">
+      <div class="card">
+        <div class="card-title">➕ Add Schedule</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Project</label>
+            <select id="sc-project" class="proj-select" style="width:100%;color:var(--text);background:var(--card)"></select>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Action</label>
+            <select id="sc-action" class="proj-select" style="width:100%;color:var(--text);background:var(--card)">
+              <option value="tests">▶ Run Tests</option>
+              <option value="generate">📄 Generate TCM</option>
+              <option value="inject">🖼 Screenshot Inject</option>
+              <option value="add-charts">📊 Add Charts</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Tag</label>
+            <select id="sc-tag" class="proj-select" style="width:100%;color:var(--text);background:var(--card)" onchange="scCheckProdWarn()">
+              <option value="all">All Tests</option>
+              <option value="@smoke">@smoke</option>
+              <option value="@e2e">@e2e</option>
+              <option value="@regression">@regression</option>
+              <option value="@visual">@visual</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Environment</label>
+            <select id="sc-env" class="proj-select" style="width:100%;color:var(--text);background:var(--card);border:1px solid var(--border)" onchange="scCheckProdWarn()">
+              <option value="uat">🟢 UAT (default)</option>
+              <option value="prod">🔴 Production</option>
+            </select>
+          </div>
+        </div>
+        <div id="sc-prod-warn" style="display:none;background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#E65100">
+          ⚠️ <b>Production + non-@smoke tag</b> — test อาจ write data จริงบน Production
+          แนะนำให้ใช้ <b>@smoke only</b> สำหรับ Prod schedule
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Type</label>
+            <select id="sc-type" class="proj-select" style="width:100%;color:var(--text);background:var(--card)" onchange="scToggleFields()">
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="cron">Cron Expression</option>
+            </select>
+          </div>
+          <div id="sc-time-wrap">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Time (HH:MM)</label>
+            <input id="sc-time" type="time" value="08:00" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--card);color:var(--text)">
+          </div>
+          <div id="sc-weekday-wrap" style="display:none">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Day of Week</label>
+            <select id="sc-weekday" class="proj-select" style="width:100%;color:var(--text);background:var(--card)">
+              <option value="0">Monday</option>
+              <option value="1">Tuesday</option>
+              <option value="2">Wednesday</option>
+              <option value="3">Thursday</option>
+              <option value="4">Friday</option>
+              <option value="5">Saturday</option>
+              <option value="6">Sunday</option>
+            </select>
+          </div>
+          <div id="sc-cron-wrap" style="display:none">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Cron Expression</label>
+            <input id="sc-cron" type="text" placeholder="0 8 * * *" value="0 8 * * *" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--card);color:var(--text)">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px" title="Override global notification rule for this schedule only">Notify on (override)</label>
+            <select id="sc-notify-on" class="proj-select" style="width:100%;color:var(--text);background:var(--card)">
+              <option value="">Use global setting</option>
+              <option value="error-only">Error only</option>
+              <option value="fail-error">Fail + error</option>
+              <option value="all">All events</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addSchedule()">➕ Add Schedule</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📅 Scheduled Runs</div>
+        <div id="sc-list"><div style="color:var(--muted);font-size:13px;padding:12px 0">Loading...</div></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="card-title" style="margin-bottom:0">🗒️ Schedule Log</div>
+          <button class="btn btn-sm btn-dark" onclick="loadSchedLog()">🔄 Refresh</button>
+        </div>
+        <pre id="sc-log" style="background:#0D1117;color:#C9D1D9;font-size:11.5px;padding:12px 14px;border-radius:8px;max-height:260px;overflow-y:auto;white-space:pre-wrap;word-break:break-all">Loading...</pre>
+      </div>
+    </div>
+
+    <!-- ══ RELEASE READINESS ════════════════════════════════════════ -->
+    <div id="section-release" class="section">
+      <div id="rr-verdict" class="rr-verdict loading">
+        <div class="rr-icon">⏳</div>
+        <div><div class="rr-title" style="color:var(--muted)">Loading...</div></div>
+      </div>
+      <div class="rr-checklist" id="rr-checklist"></div>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:right" id="rr-lastrun"></div>
+
+      <!-- Cross Review hint -->
+      <div class="cmd-hint-card" style="margin-top:16px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:18px;margin-top:2px">🔍</span>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px">Deep Analysis — Cross Review &amp; Formal Approval</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Gate ด้านบนตรวจจาก Hub data เท่านั้น — Cross Review ตรวจ gaps ทุก layer (BA→TCM→Spec→Results) และ Approve Release สร้าง sign-off document</div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap">
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">ตรวจ gap ทุก layer</div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <code style="background:#1E2A3A;color:#7DD3FC;padding:4px 10px;border-radius:6px;font-size:12px">/cross-review</code>
+                  <button class="btn btn-sm" onclick="copyCmd('/cross-review')" style="background:#F0F4F8;color:var(--muted);border:1px solid var(--border);font-size:11px">📋</button>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">สร้าง sign-off checklist</div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <code style="background:#1E2A3A;color:#7DD3FC;padding:4px 10px;border-radius:6px;font-size:12px">/approve-release</code>
+                  <button class="btn btn-sm" onclick="copyCmd('/approve-release')" style="background:#F0F4F8;color:var(--muted);border:1px solid var(--border);font-size:11px">📋</button>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">ส่ง report ให้ทีม</div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <code style="background:#1E2A3A;color:#7DD3FC;padding:4px 10px;border-radius:6px;font-size:12px">/report-send</code>
+                  <button class="btn btn-sm" onclick="copyCmd('/report-send')" style="background:#F0F4F8;color:var(--muted);border:1px solid var(--border);font-size:11px">📋</button>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:8px;font-size:11.5px;color:var(--muted)">💡 รันใน <b>Claude Code CLI</b> จาก project folder — ผลบันทึกที่ <code>docs/reviews/</code></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="section-bugs" class="section">
+      <!-- Bug Metrics Panel -->
+      <div id="bm-panel" style="display:none;margin-bottom:4px">
+        <div class="bm-grid">
+          <div class="bm-card">
+            <div class="bm-title">Severity Distribution</div>
+            <div id="bm-severity-bars"></div>
+          </div>
+          <div class="bm-card">
+            <div class="bm-title">Status Distribution</div>
+            <div id="bm-status-bars"></div>
+          </div>
+        </div>
+        <div class="bm-card" style="margin-bottom:14px">
+          <div class="bm-title">Oldest Open Bugs (aging)</div>
+          <div id="bm-aging"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-bottom:10px">
+        <div style="display:flex;background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:12px">
+          <button id="bug-view-table-btn" onclick="setBugView('table')" style="padding:4px 12px;border:none;cursor:pointer;background:var(--primary);color:#fff;font-weight:600">☰ Table</button>
+          <button id="bug-view-kanban-btn" onclick="setBugView('kanban')" style="padding:4px 12px;border:none;cursor:pointer;background:transparent;color:var(--muted);font-weight:600">⊞ Kanban</button>
+        </div>
+        <button id="bm-toggle-btn" class="btn btn-sm" style="background:#EEF4FF;color:#1565C0;border:1px solid #C5D8FF;font-size:12px" onclick="toggleBugMetrics()">📊 Show Metrics</button>
+      </div>
+      <!-- Stats bar -->
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <div class="stat" style="flex:1;min-width:100px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:#B71C1C" id="bug-stat-open">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Open</div>
+        </div>
+        <div class="stat" style="flex:1;min-width:100px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:#C62828" id="bug-stat-critical">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Critical</div>
+        </div>
+        <div class="stat" style="flex:1;min-width:100px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:#E65100" id="bug-stat-high">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">High</div>
+        </div>
+        <div class="stat" style="flex:1;min-width:100px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:#2E7D32" id="bug-stat-resolved">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Resolved</div>
+        </div>
+        <div class="stat" style="flex:1;min-width:100px;text-align:center">
+          <div style="font-size:22px;font-weight:700" id="bug-stat-total">—</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Total</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div class="card-title" style="margin:0">Bug Reports — <span id="bug-project-name" style="font-weight:400;text-transform:none">—</span></div>
+          <div class="btn-group">
+            <select id="bug-filter-status" style="font-size:12.5px;padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text)" onchange="loadBugs()">
+              <option value="">All Status</option>
+              <option value="Open">Open</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Closed">Closed</option>
+            </select>
+            <select id="bug-filter-sev" style="font-size:12.5px;padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text)" onchange="loadBugs()">
+              <option value="">All Severity</option>
+              <option value="Critical">Critical</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+            <button class="btn btn-danger btn-sm" onclick="openBugModal()">+ Log Bug</button>
+            <button class="btn btn-sm btn-download" onclick="exportBugsExcel()">⬇️ Export Excel</button>
+          </div>
+        </div>
+        <div id="bug-list-wrap">
+          <div style="text-align:center;padding:36px 20px;color:var(--muted)">
+            <div style="font-size:28px;margin-bottom:10px">☝️</div>
+            <div style="font-size:13px">เลือก project จาก dropdown ด้านบนก่อน</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- Edit Project Modal -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998;align-items:center;justify-content:center">
+  <div style="background:var(--card);border-radius:14px;padding:24px 28px;width:480px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.25)">
+    <div style="font-size:15px;font-weight:700;margin-bottom:18px">✏️ Edit Project</div>
+    <input type="hidden" id="edit-id">
+    <div class="form-row">
+      <div class="form-field" style="flex:1">
+        <label>Display Name</label>
+        <input id="edit-name" type="text">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field" style="flex:1">
+        <label>Type</label>
+        <select id="edit-type">
+          <option value="full-pipeline">full-pipeline (TCM + Playwright + Report)</option>
+          <option value="manual-testing">manual-testing (TCM + Manual Test + Report)</option>
+          <option value="playwright-only">playwright-only (Playwright เท่านั้น)</option>
+          <option value="pytest-only">pytest-only (Python pytest เท่านั้น)</option>
+        </select>
+      </div>
+      <div class="form-field" style="flex:0 0 100px">
+        <label>Color</label>
+        <input id="edit-color" type="color" style="height:34px;padding:2px 4px">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field" style="flex:1">
+        <label>Project Phase <span style="font-size:11px;font-weight:400;color:var(--muted)">(กำหนดสถานะ Release Gate)</span></label>
+        <select id="edit-phase" onchange="_editPhaseHint()">
+          <option value="planning">🗂 Planning — ยังไม่เริ่มเขียน test (ยกเว้น Gate)</option>
+          <option value="active" selected>🚀 Active — กำลังพัฒนา/ทดสอบ (Gate ปกติ)</option>
+          <option value="paused">⏸ Paused — หยุดพัฒนา (ยกเว้น Gate)</option>
+        </select>
+        <div id="edit-phase-hint" style="font-size:11px;margin-top:5px;padding:6px 10px;border-radius:6px;display:none"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field" style="flex:1">
+        <label>Figma File URL <span style="font-size:11px;font-weight:400;color:var(--muted)">(optional — ใช้ใน BA Agent ผ่าน Figma MCP)</span></label>
+        <input id="edit-figma-url" type="text" placeholder="https://www.figma.com/file/...">
+      </div>
+    </div>
+    <div class="btn-group" style="margin-top:8px">
+      <button class="btn btn-success" onclick="saveEditProject()">✓ Save</button>
+      <button class="btn btn-sm" style="background:var(--bg);color:var(--muted);border:1px solid var(--border)" onclick="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bug Report Modal -->
+<div id="bug-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 0">
+  <div style="background:var(--card);border-radius:14px;padding:26px 28px;width:640px;max-width:96vw;box-shadow:0 8px 40px rgba(0,0,0,.28);margin:auto;position:relative">
+    <div style="font-size:15px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px">
+      🐛 <span id="bug-modal-title">Log Bug Report</span>
+      <span id="bug-modal-id-badge" style="display:none;font-size:11px;font-weight:600;background:#F3E5F5;color:#7B1FA2;padding:2px 8px;border-radius:10px;margin-left:4px"></span>
+    </div>
+    <input type="hidden" id="bug-edit-id">
+    <div class="form-row">
+      <div class="form-field" style="flex:1">
+        <label>Title <span style="color:var(--danger)">*</span></label>
+        <input id="bug-title" type="text" placeholder="Brief description of the bug">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field" style="flex:1">
+        <label>Severity</label>
+        <select id="bug-severity">
+          <option value="Critical">🔴 Critical</option>
+          <option value="High">🟠 High</option>
+          <option value="Medium" selected>🟡 Medium</option>
+          <option value="Low">🟢 Low</option>
+        </select>
+      </div>
+      <div class="form-field" style="flex:1">
+        <label>Status</label>
+        <select id="bug-status">
+          <option value="Open">Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+          <option value="Closed">Closed</option>
+        </select>
+      </div>
+      <div class="form-field" style="flex:1">
+        <label>Environment</label>
+        <input id="bug-environment" type="text" placeholder="UAT / Prod / Dev">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field" style="flex:1">
+        <label>Steps to Reproduce <span style="font-size:11px;color:var(--muted)">(one step per line)</span></label>
+        <textarea id="bug-steps" rows="4" style="width:100%;resize:vertical;font-size:13px;padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:inherit" placeholder="1. Go to login page&#10;2. Enter credentials&#10;3. Click Submit"></textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field" style="flex:1">
+        <label>Expected Behavior</label>
+        <textarea id="bug-expected" rows="2" style="width:100%;resize:vertical;font-size:13px;padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:inherit" placeholder="What should happen"></textarea>
+      </div>
+      <div class="form-field" style="flex:1">
+        <label>Actual Behavior</label>
+        <textarea id="bug-actual" rows="2" style="width:100%;resize:vertical;font-size:13px;padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:inherit" placeholder="What actually happens"></textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field" style="flex:1">
+        <label>Evidence <span style="font-size:11px;color:var(--muted)">(logs, screenshot paths — one per line)</span></label>
+        <textarea id="bug-evidence" rows="2" style="width:100%;resize:vertical;font-size:13px;padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:inherit" placeholder="screenshots/login_fail.png&#10;logs/error.log"></textarea>
+        <div style="margin-top:6px">
+          <button type="button" class="btn btn-sm" style="background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;font-size:11.5px;padding:4px 10px" onclick="loadShotPicker()">🖼️ Pick Screenshot</button>
+          <span style="font-size:11px;color:var(--muted);margin-left:8px" id="shot-picker-hint"></span>
+        </div>
+        <div id="shot-picker-grid" style="display:none;margin-top:8px;max-height:160px;overflow-y:auto;display:none;flex-wrap:wrap;gap:6px;background:#F7FAFF;border:1px solid var(--border);border-radius:8px;padding:8px"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field" style="flex:1">
+        <label>Related Task</label>
+        <input id="bug-task" type="text" placeholder="TASK-42">
+      </div>
+      <div class="form-field" style="flex:2">
+        <label>Spec / Link</label>
+        <input id="bug-spec" type="text" placeholder="https://... or spec file path">
+      </div>
+    </div>
+    <div class="btn-group" style="margin-top:4px">
+      <button class="btn btn-danger" onclick="saveBug()">💾 Save Bug</button>
+      <button class="btn btn-sm" style="background:#F0F4F8;color:var(--muted);border:1px solid var(--border)" onclick="closeBugModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Semi-auto Bug Detect Panel -->
+<div id="bug-detect-banner" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9997;background:#1A1A2E;color:#fff;border-radius:14px;padding:16px 18px;box-shadow:0 6px 32px rgba(0,0,0,.45);width:380px;max-width:96vw;border:1px solid #B71C1C">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-weight:700;font-size:14px">🐛 Tests failed</div>
+    <button onclick="dismissBugDetect()" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:16px;line-height:1;padding:0">✕</button>
+  </div>
+  <div id="bug-detect-msg" style="font-size:12px;color:#aaa;margin-bottom:10px">—</div>
+  <div id="bug-detect-list" style="max-height:200px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:6px"></div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <button class="btn btn-sm" style="background:#B71C1C;color:#fff;font-weight:700;flex:1" onclick="logSelectedBugs()">
+      💾 Log Selected as Bugs
+    </button>
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.08);color:#ccc;border:1px solid rgba(255,255,255,.15)" onclick="toggleSelectAllBugs()">All</button>
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.08);color:#ccc;border:1px solid rgba(255,255,255,.15)" onclick="dismissBugDetect()">Dismiss</button>
+  </div>
+</div>
+
+<script src="/static/app.js" defer></script>
+<div id="toast-container"></div>
+
+<!-- ── Generic confirm modal ─────────────────────────────────────── -->
+<div id="confirm-overlay">
+  <div id="confirm-box">
+    <div class="ci" id="confirm-icon">⚠️</div>
+    <div class="ct" id="confirm-title">ยืนยันการดำเนินการ</div>
+    <div class="cd" id="confirm-desc"></div>
+    <div class="cb">
+      <button id="confirm-cancel">ยกเลิก</button>
+      <button id="confirm-ok">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

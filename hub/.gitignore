@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+.server.pid
+.env
+.pytest_cache/
+run_history.json
+run_history_archive/
+config.json
+config.json.bak_*
+config.json.pre_migration_*
+config_backups/
+metrics.db
+schedule.log
+schedule.log.tmp.*
+schedules.json
+schedules.json.bak_*
+.sched_locks/
+bugs/
+logs/
+backups/
+.DS_Store
+# Vue build output — regenerated via `cd frontend && npm run build`
+static/dist/
+# Node / Playwright e2e runner (root package.json)
+node_modules/
+package-lock.json
+playwright-report/
+test-results/

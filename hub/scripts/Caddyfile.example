@@ -1,0 +1,48 @@
+# F180 Hub reverse-proxy config for Caddy.
+#
+# Caddy is the simplest path to automatic HTTPS on an internal domain:
+#   - Install Caddy (https://caddyserver.com/docs/install)
+#   - Copy this file to C:\caddy\Caddyfile (Windows) or /etc/caddy/Caddyfile (Linux)
+#   - Replace hub.your-domain.internal with your real internal DNS name
+#   - Run Hub behind it:  python scripts/serve_prod.py --host 127.0.0.1 --port 8080
+#   - Start Caddy:         caddy run --config C:\caddy\Caddyfile
+#
+# Caddy handles:
+#   - TLS termination (Let's Encrypt for public, or internal CA / self-signed)
+#   - HTTP → HTTPS redirect
+#   - gzip compression
+#   - Long-running request support (Hub's SSE endpoints: /api/run/*, /api/system-check)
+
+hub.your-domain.internal {
+    # Log HTTP access (separate from Hub's own logs/hub.log)
+    log {
+        output file /var/log/caddy/f180-hub-access.log
+        format console
+    }
+
+    # Everything goes to Hub on localhost:8080
+    reverse_proxy 127.0.0.1:8080 {
+        # SSE endpoints send bytes as they happen; disable buffering
+        flush_interval -1
+        # Long upload for /api/config/import (zip)
+        transport http {
+            read_timeout 5m
+            write_timeout 5m
+        }
+    }
+
+    # Basic security headers — Hub is internal but costs nothing to add
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "same-origin"
+        # HSTS: comment out if clients use self-signed certs they must still trust
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    }
+}
+
+# For LAN-only deployments without DNS:
+# hub.local {
+#     tls internal
+#     reverse_proxy 127.0.0.1:8080 { flush_interval -1 }
+# }

@@ -1,0 +1,124 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Alpine.js PoC — QA Hub Demo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F0F4F8; color: #1A2332; padding: 24px; }
+  h1 { font-size: 22px; margin-bottom: 8px; }
+  .sub { color: #6B7C93; font-size: 13px; margin-bottom: 24px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1200px; }
+  .card { background: #fff; border: 1px solid #DDE3EC; border-radius: 10px; padding: 20px; }
+  .card h2 { font-size: 15px; font-weight: 700; color: #1F3864; margin-bottom: 14px;
+             display: flex; align-items: center; gap: 8px; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 12px; font-weight: 700; }
+  .badge.vanilla { background: #F5F5F5; color: #555; }
+  .badge.alpine { background: #E8F5E9; color: #2E7D32; }
+  input[type=text] { width: 100%; padding: 8px 10px; border: 1px solid #DDE3EC; border-radius: 6px;
+                     font-size: 13px; margin-bottom: 10px; outline: none; }
+  input[type=text]:focus { border-color: #2E75B6; }
+  .count { font-size: 12px; color: #6B7C93; margin-bottom: 10px; }
+  .item { padding: 8px 10px; border: 1px solid #DDE3EC; border-radius: 6px; margin-bottom: 6px;
+          font-size: 13px; display: flex; justify-content: space-between; }
+  .item .name { font-weight: 600; }
+  .item .type { color: #6B7C93; font-size: 11px; }
+  .empty { text-align: center; color: #6B7C93; padding: 20px; font-size: 13px; font-style: italic; }
+  pre { background: #0D1117; color: #C9D1D9; padding: 14px; border-radius: 8px; font-size: 11.5px;
+        overflow-x: auto; margin-top: 14px; line-height: 1.5; }
+  .footer { max-width: 1200px; margin-top: 28px; padding: 16px 20px; background: #fff;
+            border: 1px solid #DDE3EC; border-radius: 10px; }
+  .footer h3 { font-size: 14px; margin-bottom: 10px; color: #1F3864; }
+  .footer table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .footer td, .footer th { padding: 8px 12px; border-bottom: 1px solid #DDE3EC; text-align: left; }
+  .footer th { background: #F7FAFF; font-weight: 700; font-size: 12px; }
+</style>
+<!-- Alpine.js via CDN — no build step -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+</head>
+<body>
+
+<h1>Alpine.js PoC — Live filter project list</h1>
+<p class="sub">เทียบ 2 วิธีใช้งาน feature เดียวกัน (ค้นหาโปรเจคจากชื่อ) — ข้อมูลจริงจาก <code>/api/projects</code></p>
+
+<div class="row">
+
+  <!-- ───── Vanilla JS version ───── -->
+  <div class="card">
+    <h2>Vanilla JS <span class="badge vanilla">current pattern</span></h2>
+    <input type="text" id="v-search" placeholder="พิมพ์ค้นหา...">
+    <div class="count" id="v-count">กำลังโหลด...</div>
+    <div id="v-list"></div>
+
+<pre>// --- code ~18 lines ---
+const vInput = document.getElementById('v-search');
+const vList  = document.getElementById('v-list');
+const vCount = document.getElementById('v-count');
+let vAll = [];
+
+function vRender() {
+  const q = vInput.value.toLowerCase();
+  const filtered = vAll.filter(p =&gt; p.name.toLowerCase().includes(q));
+  vCount.textContent = `${filtered.length} / ${vAll.length} projects`;
+  vList.innerHTML = filtered.length
+    ? filtered.map(p =&gt; `&lt;div class="item"&gt;&lt;span class="name"&gt;${p.name}&lt;/span&gt;&lt;span class="type"&gt;${p.type}&lt;/span&gt;&lt;/div&gt;`).join('')
+    : '&lt;div class="empty"&gt;ไม่พบโปรเจค&lt;/div&gt;';
+}
+
+fetch('/api/projects').then(r =&gt; r.json()).then(list =&gt; { vAll = list; vRender(); });
+vInput.addEventListener('input', vRender);</pre>
+  </div>
+
+  <!-- ───── Alpine.js version ───── -->
+  <div class="card" x-data="{
+        all: [],
+        q: '',
+        get filtered() { return this.all.filter(p =&gt; p.name.toLowerCase().includes(this.q.toLowerCase())); }
+      }"
+       x-init="all = await (await fetch('/api/projects')).json()">
+    <h2>Alpine.js <span class="badge alpine">reactive pattern</span></h2>
+    <input type="text" x-model="q" placeholder="พิมพ์ค้นหา...">
+    <div class="count" x-text="all.length ? `${filtered.length} / ${all.length} projects` : 'กำลังโหลด...'"></div>
+    <template x-for="p in filtered" :key="p.id">
+      <div class="item">
+        <span class="name" x-text="p.name"></span>
+        <span class="type" x-text="p.type"></span>
+      </div>
+    </template>
+    <div x-show="all.length &amp;&amp; !filtered.length" class="empty">ไม่พบโปรเจค</div>
+
+<pre>&lt;!-- code ~9 lines (in HTML, no separate script) --&gt;
+&lt;div x-data="{
+    all: [],
+    q: '',
+    get filtered() { return this.all.filter(p =&gt; p.name.toLowerCase().includes(this.q.toLowerCase())); }
+  }"
+  x-init="all = await (await fetch('/api/projects')).json()"&gt;
+
+  &lt;input x-model="q" placeholder="พิมพ์ค้นหา..."&gt;
+  &lt;div x-text="`${filtered.length} / ${all.length} projects`"&gt;&lt;/div&gt;
+  &lt;template x-for="p in filtered" :key="p.id"&gt;
+    &lt;div&gt;&lt;span x-text="p.name"&gt;&lt;/span&gt;&lt;/div&gt;
+  &lt;/template&gt;
+&lt;/div&gt;</pre>
+  </div>
+
+</div>
+
+<div class="footer">
+  <h3>🔍 สังเกตจาก PoC นี้</h3>
+  <table>
+    <tr><th style="width:28%">มิติ</th><th>Vanilla</th><th>Alpine</th></tr>
+    <tr><td>บรรทัด code</td><td>~18 บรรทัด (JS แยกจาก HTML)</td><td>~9 บรรทัด (inline ใน HTML)</td></tr>
+    <tr><td>Manual DOM update</td><td>ต้อง <code>innerHTML</code> ทุกครั้ง</td><td>ไม่ต้อง — ประกาศ <code>x-for</code>, <code>x-text</code> เท่านั้น</td></tr>
+    <tr><td>Event wiring</td><td><code>addEventListener('input', ...)</code></td><td><code>x-model="q"</code> (two-way binding)</td></tr>
+    <tr><td>Build step</td><td>ไม่มี</td><td>ไม่มี (CDN)</td></tr>
+    <tr><td>Bundle size</td><td>0 KB</td><td>~15 KB (gzip)</td></tr>
+    <tr><td>Debug</td><td>DevTools ปกติ</td><td>DevTools ปกติ + Alpine DevTools extension (optional)</td></tr>
+    <tr><td>State mgmt</td><td>ต้องเก็บ global var</td><td>Scoped ใน <code>x-data</code></td></tr>
+    <tr><td>Learning curve</td><td>รู้ JS ก็พอ</td><td>เพิ่ม 8–10 directives (<code>x-data, x-model, x-for, x-show, x-text, x-if, x-bind, x-on, x-init</code>)</td></tr>
+  </table>
+</div>
+
+</body>
+</html>
