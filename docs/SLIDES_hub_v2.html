@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QA Hub UI v2 &mdash; Vue 3 modernisation</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Sarabun:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --c-bg:        #fbfaf7;
+      --c-bg-alt:    #f5f4f0;
+      --c-text:      #1c1917;
+      --c-muted:     #78716c;
+      --c-border:    #e7e5e4;
+      --c-card:      #ffffff;
+      --c-vue:       #42b883;
+      --c-vue-dark:  #35495e;
+      --c-vue-soft:  rgba(66, 184, 131, 0.10);
+      --c-warn:      #d97706;
+      --c-danger:    #dc2626;
+      --c-blue:      #3b82f6;
+      --c-mono: "JetBrains Mono", "Consolas", monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--c-bg);
+      color: var(--c-text);
+      font-family: "Inter", "Sarabun", system-ui, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+    }
+    code {
+      font-family: var(--c-mono);
+      background: var(--c-vue-soft);
+      color: var(--c-vue-dark);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+    .deck {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      padding: 32px;
+    }
+    .deck-frame {
+      width: min(1280px, 100%);
+      height: min(800px, calc(100vh - 90px));
+      background: var(--c-card);
+      border-radius: 22px;
+      border: 1px solid var(--c-border);
+      box-shadow: 0 30px 80px rgba(28, 25, 23, 0.08);
+      position: relative; overflow: hidden;
+    }
+    .progress {
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--c-vue) 0%, var(--c-vue-dark) 100%);
+      transition: width 0.3s ease;
+      z-index: 10;
+    }
+    .meta {
+      position: absolute; top: 16px; left: 22px; right: 22px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: var(--c-mono); font-size: 11px;
+      color: var(--c-muted); letter-spacing: 0.06em; text-transform: uppercase;
+      z-index: 5;
+    }
+    .meta .vue-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--c-vue); font-weight: 600;
+    }
+    .meta .vue-badge svg { width: 14px; height: 14px; }
+    .stage {
+      position: absolute; top: 48px; bottom: 56px; left: 0; right: 0;
+      padding: 28px 60px; overflow: hidden;
+    }
+    .slide {
+      position: absolute; inset: 28px 60px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .slide-enter-active, .slide-leave-active {
+      transition: opacity 0.32s ease, transform 0.32s ease;
+    }
+    .slide-enter-from { opacity: 0; transform: translateX(40px); }
+    .slide-leave-to   { opacity: 0; transform: translateX(-40px); }
+
+    .controls {
+      position: absolute; bottom: 16px; left: 22px; right: 22px;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 5;
+    }
+    .pager { font-family: var(--c-mono); font-size: 12px; color: var(--c-muted); }
+    .pager .current { color: var(--c-vue); font-weight: 700; }
+    .nav-btns { display: flex; gap: 8px; }
+    .nav-btn {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--c-border);
+      background: var(--c-card); color: var(--c-muted);
+      cursor: pointer; font-size: 16px;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover {
+      border-color: var(--c-vue); color: var(--c-vue);
+      transform: translateY(-1px);
+    }
+    .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .nav-btn.icon-overview { font-size: 12px; font-family: var(--c-mono); font-weight: 700; }
+
+    h1, h2, h3, h4 { margin: 0; letter-spacing: -0.02em; font-weight: 700; }
+    h1 { font-size: 56px; line-height: 1.05; }
+    h2 { font-size: 38px; margin-bottom: 8px; }
+    h3 { font-size: 22px; color: var(--c-vue); margin-bottom: 8px; }
+    h4 { font-size: 16px; color: var(--c-vue-dark); }
+
+    p { margin: 0; line-height: 1.55; }
+    .small  { font-size: 14px; }
+    .tiny   { font-size: 11px; }
+    .muted  { color: var(--c-muted); }
+    .vue    { color: var(--c-vue); }
+    .center { text-align: center; }
+
+    .hero {
+      padding: 38px 36px;
+      border-radius: 18px;
+      background:
+        radial-gradient(800px 200px at 50% -20%, var(--c-vue-soft), transparent 70%),
+        linear-gradient(180deg, #ffffff 0%, var(--c-bg-alt) 100%);
+      border: 1px solid var(--c-border);
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--c-vue-soft); color: var(--c-vue);
+      padding: 5px 14px; border-radius: 999px;
+      font-weight: 600; font-size: 11px; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid rgba(66, 184, 131, 0.2);
+    }
+    .badge .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--c-vue); box-shadow: 0 0 8px var(--c-vue);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.5; transform: scale(0.8); }
+    }
+    .grid { display: grid; gap: 14px; }
+    .grid.g-2 { grid-template-columns: 1fr 1fr; }
+    .grid.g-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .card {
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      transition: all 0.2s;
+    }
+    .card:hover {
+      border-color: var(--c-vue); transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(66, 184, 131, 0.10);
+    }
+    .card h4 {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; margin-bottom: 6px; color: var(--c-vue-dark);
+    }
+    .card h4 .num {
+      font-family: var(--c-mono); font-size: 10px;
+      color: var(--c-vue); background: var(--c-vue-soft);
+      padding: 2px 7px; border-radius: 4px; font-weight: 600;
+    }
+    .card p, .card ul { margin: 0; font-size: 13px; line-height: 1.5; }
+    .card ul { padding-left: 1.1em; }
+
+    .chip {
+      display: inline-flex; align-items: center;
+      padding: 3px 10px; border-radius: 999px;
+      font-size: 11px; font-weight: 600;
+      margin: 2px 3px;
+      background: var(--c-vue-soft); color: var(--c-vue);
+      border: 1px solid rgba(66, 184, 131, 0.25);
+      font-family: var(--c-mono);
+    }
+    .chip.green { background: #dcfce7; color: #16a34a; border-color: #bbf7d0; }
+    .chip.amber { background: #fef3c7; color: var(--c-warn); border-color: #fde68a; }
+    .chip.red   { background: #fee2e2; color: var(--c-danger); border-color: #fecaca; }
+    .chip.blue  { background: #dbeafe; color: var(--c-blue); border-color: #bfdbfe; }
+    .chip.gray  { background: #f5f5f4; color: var(--c-muted); border-color: var(--c-border); }
+    .chip.outline { background: transparent; }
+
+    .shot {
+      max-width: 100%; max-height: 56vh;
+      width: auto;
+      border-radius: 12px;
+      border: 1px solid var(--c-border);
+      box-shadow: 0 10px 40px rgba(28, 25, 23, 0.10);
+      display: block; margin: 0 auto;
+    }
+
+    pre.code {
+      margin: 0;
+      background: var(--c-vue-dark);
+      color: #f8f8f2;
+      font-family: var(--c-mono);
+      font-size: 13px; line-height: 1.55;
+      padding: 18px 20px;
+      border-radius: 12px;
+      overflow: auto;
+      max-height: 60vh;
+      border: 1px solid var(--c-border);
+    }
+    pre.code .kw  { color: #ff79c6; }
+    pre.code .str { color: #f1fa8c; }
+    pre.code .cm  { color: #6272a4; font-style: italic; }
+    pre.code .fn  { color: #50fa7b; }
+    pre.code .ty  { color: #8be9fd; }
+
+    .ascii-diagram {
+      font-family: var(--c-mono); font-size: 12px;
+      background: var(--c-vue-dark); color: #cbd5e1;
+      padding: 18px 22px; border-radius: 12px;
+      line-height: 1.45; white-space: pre;
+      overflow: auto;
+      border: 1px solid var(--c-border);
+    }
+    .ascii-diagram .hi { color: var(--c-vue); font-weight: 700; }
+    .ascii-diagram .legacy { color: #fbbf24; font-weight: 700; }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--c-border), transparent);
+      margin: 14px 0;
+    }
+
+    .feature-row {
+      display: flex; align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--c-border);
+      font-size: 13px;
+    }
+    .feature-row:last-child { border-bottom: none; }
+    .feature-row .label { flex: 1; color: var(--c-text); }
+    .feature-row .v {
+      width: 80px; text-align: center; font-family: var(--c-mono); font-weight: 600;
+    }
+    .feature-row .v.legacy { color: var(--c-muted); }
+    .feature-row .v.v2     { color: var(--c-vue); }
+    .feature-row .check { color: var(--c-vue); }
+    .feature-row .x     { color: var(--c-muted); }
+    .feature-row .new   { color: var(--c-warn); font-size: 10px; font-weight: 700; }
+    .feature-table {
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .feature-table-head {
+      display: flex; padding: 10px 12px;
+      background: var(--c-bg-alt);
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--c-muted); font-weight: 600;
+      border-bottom: 1px solid var(--c-border);
+    }
+    .feature-table-head .label { flex: 1; }
+    .feature-table-head .v { width: 80px; text-align: center; }
+
+    .overview-grid {
+      position: absolute; inset: 0;
+      background: var(--c-bg);
+      padding: 56px 40px 40px 40px;
+      overflow: auto;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      align-content: start;
+    }
+    .overview-tile {
+      aspect-ratio: 16 / 10;
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-radius: 10px;
+      cursor: pointer;
+      padding: 14px;
+      font-size: 11px;
+      color: var(--c-muted);
+      transition: all 0.15s;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .overview-tile:hover { border-color: var(--c-vue); transform: translateY(-2px); }
+    .overview-tile.active {
+      border-color: var(--c-vue);
+      box-shadow: 0 0 0 2px var(--c-vue-soft);
+    }
+    .overview-tile .ot-num { font-family: var(--c-mono); font-size: 10px; color: var(--c-vue); font-weight: 700; }
+    .overview-tile .ot-title { color: var(--c-text); font-weight: 600; font-size: 13px; line-height: 1.3; }
+    .overview-header {
+      position: absolute; top: 16px; left: 40px; right: 40px;
+      display: flex; justify-content: space-between; align-items: center;
+      color: var(--c-muted); font-size: 12px; font-family: var(--c-mono);
+    }
+    @media (max-height: 850px) {
+      h1 { font-size: 44px; }
+      h2 { font-size: 30px; }
+    }
+    [v-cloak] { display: none; }
+  </style>
+</head>
+<body>
+
+<div id="app" v-cloak>
+  <div class="deck">
+    <div class="deck-frame">
+
+      <div class="progress" :style="{ width: progress + '%' }"></div>
+
+      <header class="meta">
+        <div>QA Hub UI <span style="color:var(--c-vue)">·</span> v2 modernisation</div>
+        <div class="vue-badge">
+          <svg viewBox="0 0 256 221" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#42B883" d="M204.8 0H256L128 220.8L0 0h97.92L128 51.2L157.44 0H204.8z"/>
+            <path fill="#35495E" d="M0 0l128 220.8L256 0h-51.2L128 132.48L50.56 0H0z"/>
+            <path fill="#42B883" d="M50.56 0L128 133.12L204.8 0h-47.36L128 51.2L97.92 0H50.56z"/>
+          </svg>
+          Vue 3 + Pinia + Vite
+        </div>
+      </header>
+
+      <main class="stage">
+        <transition name="slide" mode="out-in">
+          <section class="slide" :key="currentIndex">
+
+            <!-- 1. Title -->
+            <template v-if="currentIndex === 0">
+              <div class="hero center">
+                <span class="badge"><span class="dot"></span> Hub Frontend &middot; Modernisation</span>
+                <h1 style="margin: 18px 0 8px 0;">Hub UI <span class="vue">v2</span></h1>
+                <p class="muted" style="font-size: 18px;">
+                  Strangler-fig migration &mdash; vanilla JS dashboard <span class="vue">&rarr;</span> Vue 3 SPA
+                </p>
+                <div class="divider"></div>
+                <div>
+                  <span class="chip">Vue 3</span>
+                  <span class="chip">Pinia</span>
+                  <span class="chip">Vite</span>
+                  <span class="chip">TypeScript</span>
+                  <span class="chip green">15 routes shipped</span>
+                </div>
+                <p class="tiny muted" style="margin-top: 22px; font-family: var(--c-mono); letter-spacing: 0.1em;">
+                  Mounted at /v2/ &middot; same Flask backend, zero downtime
+                </p>
+              </div>
+            </template>
+
+            <!-- 2. The challenge -->
+            <template v-else-if="currentIndex === 1">
+              <h2>Why migrate at all?</h2>
+              <p class="muted small" style="margin-bottom: 14px;">
+                Legacy <code>templates/dashboard.html</code> &mdash; vanilla HTML/JS/CSS, ~3k LOC, growing pains
+              </p>
+              <div class="grid g-2">
+                <div class="card" v-for="c in painCards" :key="c.t">
+                  <h4><span class="num">{{ c.n }}</span> {{ c.t }}</h4>
+                  <ul><li v-for="b in c.bullets" :key="b" v-html="b"></li></ul>
+                </div>
+              </div>
+            </template>
+
+            <!-- 3. Strategy -->
+            <template v-else-if="currentIndex === 2">
+              <h2>Strategy &mdash; <span class="vue">strangler-fig</span></h2>
+              <p class="muted small" style="margin-bottom: 12px;">
+                ใหม่อยู่ข้างเก่า ค่อยๆ แทน &mdash; ไม่ต้อง freeze, ไม่ต้อง big-bang rewrite
+              </p>
+              <pre class="ascii-diagram">                              Browser
+                                |
+            +---------------------------------------+
+            |                                       |
+            <span class="legacy">/  (legacy)</span>                            <span class="hi">/v2/  (Vue 3)</span>
+            templates/dashboard.html              hub/static/dist/index.html
+            ~3k LOC vanilla JS                    ~187 modules, 360 KB gzipped
+            |                                       |
+            +-------------- fetch /api/* -----------+
+                                |
+                          Flask app.py
+                          (single backend)
+
+  Cutover plan: feature-flag per route &rarr; default to v2 once at parity
+                &rarr; keep legacy as fallback &rarr; eventually remove templates/</pre>
+            </template>
+
+            <!-- 4. Tech stack -->
+            <template v-else-if="currentIndex === 3">
+              <h2>Stack choices</h2>
+              <div class="grid g-3" style="margin-top: 12px;">
+                <div class="card" v-for="s in stackCards" :key="s.t">
+                  <h4><span class="num">{{ s.n }}</span> {{ s.t }}</h4>
+                  <p class="small" v-html="s.body"></p>
+                </div>
+              </div>
+              <p class="tiny muted center" style="margin-top: 14px;">
+                เลือก Vue 3 <span class="vue">composition API</span> + <code>&lt;script setup&gt;</code> +
+                Pinia เพราะ DX ดีกว่า Vuex และ migration story ตรงไปตรงมาที่สุด
+              </p>
+            </template>
+
+            <!-- 5. Dashboard screenshot -->
+            <template v-else-if="currentIndex === 4">
+              <h2>Dashboard <span class="muted">/v2/dashboard</span></h2>
+              <p class="muted small" style="margin-bottom: 8px;">
+                Stats row + trend chart + run history table &mdash; โครงเดียวกันกับ legacy แต่ <span class="vue">component-driven</span>
+              </p>
+              <div class="center"><img src="screenshots/v2-01-dashboard.png" alt="v2 dashboard" class="shot" /></div>
+            </template>
+
+            <!-- 6. All Projects Overview (UNIQUE) -->
+            <template v-else-if="currentIndex === 5">
+              <h2>All Projects Overview <span class="chip amber" style="vertical-align: middle;">v2 only</span></h2>
+              <p class="muted small" style="margin-bottom: 8px;">
+                Cross-project rollup &mdash; flakiness, run-fail %, test-pass %, open bugs, release gate ในแถวเดียว
+              </p>
+              <div class="center"><img src="screenshots/v2-02-overview.png" alt="all projects overview" class="shot" /></div>
+            </template>
+
+            <!-- 7. Bug Tracker (Kanban) -->
+            <template v-else-if="currentIndex === 6">
+              <h2>Bug Tracker <span class="muted">/v2/bugs</span></h2>
+              <p class="muted small" style="margin-bottom: 8px;">
+                Severity guideline บนหัว &middot; Table/Kanban toggle &middot; CSV/Excel export &middot; assignee + aging
+              </p>
+              <div class="center"><img src="screenshots/v2-04-bugs.png" alt="bug tracker v2" class="shot" /></div>
+            </template>
+
+            <!-- 8. Release Gate (with AI) -->
+            <template v-else-if="currentIndex === 7">
+              <h2>Release Gate <span class="chip blue" style="vertical-align: middle;">+ AI summary</span></h2>
+              <p class="muted small" style="margin-bottom: 8px;">
+                Verdict + 6 criteria + <span class="vue">AI release summary</span>: ส่ง verdict ไปให้ Claude สรุปเป็นไทยให้ stakeholder
+              </p>
+              <div class="center"><img src="screenshots/v2-05-release.png" alt="release gate v2" class="shot" /></div>
+            </template>
+
+            <!-- 9. Activity Feed (UNIQUE) -->
+            <template v-else-if="currentIndex === 8">
+              <h2>Activity Feed <span class="chip amber" style="vertical-align: middle;">v2 only</span></h2>
+              <p class="muted small" style="margin-bottom: 8px;">
+                Single timeline &mdash; runs, bug changes, schedule fires, config updates &mdash; รวมในหน้าเดียว
+              </p>
+              <div class="center"><img src="screenshots/v2-07-activity.png" alt="activity feed" class="shot" /></div>
+            </template>
+
+            <!-- 10. Schedule + User Guide -->
+            <template v-else-if="currentIndex === 9">
+              <h2>Schedule &middot; User Guide</h2>
+              <p class="muted small" style="margin-bottom: 12px;">
+                Daily route + cycle เขียนเป็น component &mdash; <span class="vue">edit เปิด PR ทันที</span> ไม่ต้อง deploy
+              </p>
+              <div class="grid g-2">
+                <div><div class="center"><img src="screenshots/v2-06-schedule.png" alt="schedule" class="shot" style="max-height: 38vh;" /></div></div>
+                <div><div class="center"><img src="screenshots/v2-08-guide.png" alt="user guide" class="shot" style="max-height: 38vh;" /></div></div>
+              </div>
+            </template>
+
+            <!-- 11. Feature parity matrix -->
+            <template v-else-if="currentIndex === 10">
+              <h2>Migration scorecard</h2>
+              <p class="muted small" style="margin-bottom: 12px;">
+                15 routes shipped &middot; v2 มี feature ที่ legacy ไม่เคยมี 4 อย่าง (NEW)
+              </p>
+              <div class="feature-table">
+                <div class="feature-table-head">
+                  <span class="label">Feature</span>
+                  <span class="v">Legacy</span>
+                  <span class="v">Vue v2</span>
+                </div>
+                <div class="feature-row" v-for="f in featureMatrix" :key="f.name">
+                  <span class="label">{{ f.name }} <span v-if="f.tag" :class="['chip', f.tag]" style="margin-left: 6px;">{{ f.tagText }}</span></span>
+                  <span :class="['v', f.legacy ? 'legacy' : 'x']">{{ f.legacy ? '✓' : '·' }}</span>
+                  <span :class="['v', 'v2', f.v2 ? 'check' : 'x']">{{ f.v2 ? '✓' : '·' }}</span>
+                </div>
+              </div>
+            </template>
+
+            <!-- 12. Vue patterns -->
+            <template v-else-if="currentIndex === 11">
+              <h2>Vue 3 patterns used</h2>
+              <p class="muted small" style="margin-bottom: 10px;">
+                Composition API + Pinia stores + <code>&lt;script setup&gt;</code> &mdash; ทุก component
+              </p>
+              <pre class="code"><span class="cm">// stores/projects.ts &mdash; Pinia store, persisted to localStorage</span>
+<span class="kw">export const</span> <span class="fn">useProjectsStore</span> = <span class="fn">defineStore</span>(<span class="str">"projects"</span>, () =&gt; {
+  <span class="kw">const</span> active = <span class="fn">ref</span>&lt;<span class="ty">Project</span> | <span class="ty">null</span>&gt;(<span class="ty">null</span>);
+  <span class="kw">const</span> all    = <span class="fn">ref</span>&lt;<span class="ty">Project</span>[]&gt;([]);
+
+  <span class="kw">async function</span> <span class="fn">refresh</span>() {
+    all.value = <span class="kw">await</span> api.<span class="fn">get</span>&lt;<span class="ty">Project</span>[]&gt;(<span class="str">"/api/projects"</span>);
+  }
+  <span class="kw">function</span> <span class="fn">switchTo</span>(p: <span class="ty">Project</span>) {
+    active.value = p;
+    <span class="fn">localStorage.setItem</span>(<span class="str">"fp_project"</span>, <span class="fn">JSON.stringify</span>(p));
+  }
+  <span class="kw">return</span> { active, all, refresh, switchTo };
+});
+
+<span class="cm">// views/DashboardView.vue &mdash; consumes the store reactively</span>
+&lt;<span class="kw">script setup lang</span>=<span class="str">"ts"</span>&gt;
+<span class="kw">const</span> projects = <span class="fn">useProjectsStore</span>();
+<span class="kw">const</span> runs     = <span class="fn">computed</span>(() =&gt; <span class="fn">filterByProject</span>(history.value, projects.active));
+&lt;/<span class="kw">script</span>&gt;</pre>
+            </template>
+
+            <!-- 13. Why Vue (not React) -->
+            <template v-else-if="currentIndex === 12">
+              <h2>Why <span class="vue">Vue 3</span> &mdash; not React?</h2>
+              <div class="grid g-2" style="margin-top: 12px;">
+                <div class="card" v-for="r in vueReasons" :key="r.t">
+                  <h4><span class="num">{{ r.n }}</span> {{ r.t }}</h4>
+                  <p class="small" v-html="r.body"></p>
+                </div>
+              </div>
+              <p class="tiny muted center" style="margin-top: 14px;">
+                React จะ valid เหมือนกัน &mdash; เลือก Vue เพราะ team เคยใช้ + migration cost ต่ำ + DX สำหรับ small team
+              </p>
+            </template>
+
+            <!-- 14. Roadmap + Thanks -->
+            <template v-else-if="currentIndex === 13">
+              <div class="hero center">
+                <span class="badge"><span class="dot"></span> Migration status</span>
+                <h1 style="margin: 14px 0 6px 0; font-size: 42px;">15 / 15 routes shipped</h1>
+                <p class="muted small" style="margin-bottom: 10px;">
+                  Legacy still online as fallback &middot; cutover when feature-flag flips
+                </p>
+                <div class="divider"></div>
+                <div class="grid g-2" style="text-align: left;">
+                  <div class="card">
+                    <h4><span class="num">next</span> Cutover</h4>
+                    <p class="small">Default new users to /v2/, keep legacy 1 release as fallback, remove <code>templates/dashboard.html</code></p>
+                  </div>
+                  <div class="card">
+                    <h4><span class="num">next</span> i18n</h4>
+                    <p class="small">vue-i18n plug-in &mdash; แยก Thai/English copy ออกจาก template</p>
+                  </div>
+                </div>
+                <p class="tiny muted" style="margin-top: 16px;">
+                  <code>./setup.ps1</code> &rarr; <code>http://localhost:8080/v2/</code>
+                </p>
+              </div>
+            </template>
+
+          </section>
+        </transition>
+      </main>
+
+      <footer class="controls">
+        <div class="pager">
+          <span class="current">{{ String(currentIndex + 1).padStart(2, '0') }}</span>
+          <span class="muted"> / {{ String(slideTitles.length).padStart(2, '0') }}</span>
+          <span class="muted" style="margin-left: 14px;">&larr; &rarr; nav &middot; <kbd style="font-size:10px;">o</kbd> overview &middot; <kbd style="font-size:10px;">f</kbd> fullscreen</span>
+        </div>
+        <div class="nav-btns">
+          <button class="nav-btn icon-overview" @click="overview = !overview" title="Overview (O)">{{ overview ? 'X' : 'O' }}</button>
+          <button class="nav-btn" @click="prev" :disabled="currentIndex === 0" title="Prev (←)">&larr;</button>
+          <button class="nav-btn" @click="next" :disabled="currentIndex === slideTitles.length - 1" title="Next (→)">&rarr;</button>
+        </div>
+      </footer>
+
+      <transition name="slide">
+        <div v-if="overview" class="overview-grid" @click.self="overview = false">
+          <div class="overview-header">
+            <span>Overview &middot; press <kbd>O</kbd> to close</span>
+            <span>{{ slideTitles.length }} slides</span>
+          </div>
+          <div
+            v-for="(t, i) in slideTitles"
+            :key="i"
+            :class="['overview-tile', { active: i === currentIndex }]"
+            @click="goTo(i)"
+          >
+            <span class="ot-num">{{ String(i + 1).padStart(2, '0') }}</span>
+            <span class="ot-title">{{ t }}</span>
+          </div>
+        </div>
+      </transition>
+
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { createApp, ref, computed, onMounted, onBeforeUnmount } from "https://unpkg.com/vue@3.4/dist/vue.esm-browser.prod.js";
+
+  createApp({
+    setup() {
+      const slideTitles = [
+        "Title — Hub UI v2",
+        "Why migrate at all?",
+        "Strategy — strangler-fig",
+        "Stack choices",
+        "Dashboard /v2/dashboard",
+        "All Projects Overview (v2 only)",
+        "Bug Tracker /v2/bugs",
+        "Release Gate + AI summary",
+        "Activity Feed (v2 only)",
+        "Schedule + User Guide",
+        "Migration scorecard",
+        "Vue 3 patterns used",
+        "Why Vue 3 — not React?",
+        "15/15 routes shipped",
+      ];
+
+      const currentIndex = ref(0);
+      const overview = ref(false);
+
+      const progress = computed(
+        () => Math.round(((currentIndex.value + 1) / slideTitles.length) * 100)
+      );
+
+      function next() {
+        if (currentIndex.value < slideTitles.length - 1) currentIndex.value++;
+      }
+      function prev() {
+        if (currentIndex.value > 0) currentIndex.value--;
+      }
+      function goTo(i) {
+        currentIndex.value = i;
+        overview.value = false;
+      }
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+      }
+      function onKey(e) {
+        if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") next();
+        else if (e.key === "ArrowLeft" || e.key === "PageUp") prev();
+        else if (e.key === "Home") currentIndex.value = 0;
+        else if (e.key === "End") currentIndex.value = slideTitles.length - 1;
+        else if (e.key === "o" || e.key === "O") overview.value = !overview.value;
+        else if (e.key === "f" || e.key === "F") toggleFullscreen();
+        else if (e.key === "Escape") overview.value = false;
+      }
+      onMounted(() => {
+        window.addEventListener("keydown", onKey);
+        const hash = parseInt(location.hash.replace("#", ""), 10);
+        if (!isNaN(hash) && hash >= 1 && hash <= slideTitles.length) {
+          currentIndex.value = hash - 1;
+        }
+      });
+      onBeforeUnmount(() => {
+        window.removeEventListener("keydown", onKey);
+      });
+      computed(() => { location.hash = String(currentIndex.value + 1); return currentIndex.value; });
+
+      // ---- slide content data ----
+      const painCards = [
+        {
+          n: "01",
+          t: "Pain points",
+          bullets: [
+            "ทุก feature = แตะ <code>dashboard.html</code> + กระจายการ <code>fetch()</code> ทั่วไฟล์",
+            "ไม่มี state management — ทุกหน้า re-fetch ทุกอย่าง",
+            "เพิ่ม <code>multi-project</code> ลำบาก เพราะ scope กระจาย",
+            "Refactor เสี่ยง — ไม่มี typing, ไม่มี component boundary",
+          ],
+        },
+        {
+          n: "02",
+          t: "Goals",
+          bullets: [
+            "Component-driven — <code>BugKanban</code>, <code>TrendChart</code>, <code>ReleaseGate</code> reuse ได้",
+            "Pinia store — single source of truth ต่อ domain",
+            "TypeScript — type ทุก API response (กัน drift)",
+            "Vite HMR — feedback loop &lt; 100 ms",
+            "ขยายฟีเจอร์ใหม่ที่ legacy ทำไม่ได้",
+          ],
+        },
+      ];
+
+      const stackCards = [
+        { n: "ui",    t: "Vue 3",       body: "Composition API &middot; <code>&lt;script setup&gt;</code><br/>Reactivity ลึก, เขียนสั้น<br/><span class='muted tiny'>~3.5 KB runtime</span>" },
+        { n: "state", t: "Pinia",       body: "5 stores &mdash; projects / bugs / runs / theme / onboarding<br/>Composition-style + persisted to localStorage" },
+        { n: "build", t: "Vite",        body: "187 modules &middot; 360 KB JS gzipped 118 KB<br/>HMR &lt; 100 ms<br/><span class='muted tiny'>v6.4 + esbuild</span>" },
+        { n: "lang",  t: "TypeScript",  body: "strict mode &middot; <code>api/types.ts</code> mirrors Flask schemas<br/>API drift caught at compile" },
+        { n: "router", t: "vue-router 4", body: "<code>createWebHistory('/v2/')</code><br/>15 routes &middot; lazy-loaded views<br/><span class='muted tiny'>+ deep-link support</span>" },
+        { n: "deploy", t: "Flask serves dist/", body: "<code>app.py</code> mounts /v2/* &rarr; <code>static/dist/index.html</code><br/>Same backend, no separate Node server" },
+      ];
+
+      const featureMatrix = [
+        { name: "Dashboard + trend chart",    legacy: true,  v2: true,  tag: "", tagText: "" },
+        { name: "Pipeline / Run Tests",       legacy: true,  v2: true,  tag: "", tagText: "" },
+        { name: "Bug Tracker (table)",        legacy: true,  v2: true,  tag: "", tagText: "" },
+        { name: "Bug Kanban view",            legacy: false, v2: true,  tag: "amber", tagText: "NEW" },
+        { name: "Release Gate verdict",       legacy: true,  v2: true,  tag: "", tagText: "" },
+        { name: "AI release summary",         legacy: false, v2: true,  tag: "amber", tagText: "NEW" },
+        { name: "Schedule (daily/weekly/cron)", legacy: true, v2: true,  tag: "", tagText: "" },
+        { name: "User Guide tab",             legacy: true,  v2: true,  tag: "", tagText: "" },
+        { name: "All Projects Overview",      legacy: false, v2: true,  tag: "amber", tagText: "NEW" },
+        { name: "Activity Feed timeline",     legacy: false, v2: true,  tag: "amber", tagText: "NEW" },
+        { name: "Command Palette (⌘K)",       legacy: false, v2: true,  tag: "amber", tagText: "NEW" },
+        { name: "Theme toggle (light/dark)",  legacy: false, v2: true,  tag: "amber", tagText: "NEW" },
+      ];
+
+      const vueReasons = [
+        { n: "01", t: "Migration cost", body: "Legacy is template-driven HTML &mdash; Vue's template syntax maps 1:1. React's JSX would mean rewriting every helper from scratch." },
+        { n: "02", t: "Single-file components", body: "<code>&lt;template&gt; &lt;script&gt; &lt;style scoped&gt;</code> in one file &mdash; matches the way the legacy dashboard already grouped concerns by section." },
+        { n: "03", t: "DX for small team", body: "Composition API + Pinia + Vite = หยิบใช้ได้เลย โดยไม่ต้องเลือก state lib (Redux vs Zustand vs Jotai vs ...) ทุก project." },
+        { n: "04", t: "Honest trade-off", body: "Job market สำหรับ React ใหญ่กว่า &mdash; ถ้าจะ hire เพิ่ม React จะหาคนง่ายกว่า. ในที่นี้ team-of-1 + Vue muscle memory ชนะ." },
+      ];
+
+      return {
+        slideTitles, currentIndex, overview, progress,
+        next, prev, goTo,
+        painCards, stackCards, featureMatrix, vueReasons,
+      };
+    },
+  }).mount("#app");
+</script>
+
+</body>
+</html>
