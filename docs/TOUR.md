@@ -27,8 +27,10 @@ Show:
   `error`, `visual`). Test bodies read like requirements:
   `await login.loginAs("standard")`.
 - `tests/e2e/TS_06_problem_user.visual.spec.ts` — `problem_user` serves
-  the same dog photo for every product. We capture a baseline screenshot
-  and `toHaveScreenshot()` makes future diffs fail loudly.
+  the same dog photo for every product. We assert that all six product
+  `<img src>` values collapse to a single unique URL — stronger than a
+  pixel-diff baseline because it survives OS rendering differences in CI.
+  A full-page screenshot is still saved as evidence for the release gate.
 - `npm run test:smoke` — 4 tests in 12 seconds, hub-tag-compatible.
 
 ## 2 — Hub dashboard tour (5 min)

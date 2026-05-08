@@ -1,7 +1,11 @@
 /**
  * One-shot Playwright script to capture demo screenshots used by SLIDES.html.
  *
- * Run after `setup.ps1` while the hub is up at http://localhost:8080:
+ * Skipped unless CAPTURE_DEMO=1 is set, so it does not run in CI or under
+ * `npm test`. To regenerate screenshots locally:
+ *
+ *   ./setup.ps1                                  # starts hub at :8080
+ *   $env:CAPTURE_DEMO = "1"
  *   cd projects/saucedemo
  *   npx playwright test tests/e2e/_capture_demo_screenshots.spec.ts --workers=1
  *
@@ -14,6 +18,13 @@ const HUB = process.env.HUB_URL ?? "http://localhost:8080";
 const OUT = path.resolve(__dirname, "../../../../docs/screenshots");
 
 test.use({ viewport: { width: 1440, height: 900 } });
+
+test.beforeEach(() => {
+  test.skip(
+    process.env.CAPTURE_DEMO !== "1",
+    "demo capture only — set CAPTURE_DEMO=1 and start the hub at :8080"
+  );
+});
 
 async function gotoTab(page: any, selector: string) {
   await page.goto(HUB);
