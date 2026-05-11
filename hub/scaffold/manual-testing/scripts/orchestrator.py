@@ -48,7 +48,7 @@ def save_json(data: dict, name: str):
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2))
     return path
 
-import subprocess, json, tempfile, os
+import subprocess, json, tempfile, os, shutil
 
 # ── Agent caller — SDK if API key available, else claude CLI ──────────────────
 
@@ -67,17 +67,32 @@ def _call_via_sdk(system_prompt: str, user_message) -> str:
     return response.content[0].text
 
 
+def _resolve_claude_cli() -> str:
+    """Resolve absolute path to claude CLI executable.
+
+    On Windows, subprocess.run([...]) without shell=True calls CreateProcess directly,
+    which does not search PATHEXT — so "claude" alone fails even when claude.exe is on PATH.
+    """
+    found = shutil.which("claude")
+    if found:
+        return found
+    raise FileNotFoundError(
+        "claude CLI not found on PATH. Install with: npm install -g @anthropic-ai/claude-code"
+    )
+
+
 def _call_via_cli(system_prompt: str, user_message) -> str:
     """Call Claude via claude -p CLI (no API key needed)."""
     text = user_message if isinstance(user_message, str) else user_message[-1]["text"]
     prompt_text = f"{system_prompt}\n\n---\n\n{text}"
+    claude_exe = _resolve_claude_cli()
     with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
         f.write(prompt_text)
         tmp_path = f.name
     try:
         with open(tmp_path, "r", encoding="utf-8") as f:
             result = subprocess.run(
-                ["claude", "-p"],
+                [claude_exe, "-p"],
                 stdin=f,
                 capture_output=True, text=True, encoding="utf-8",
             )
