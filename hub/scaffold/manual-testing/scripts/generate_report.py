@@ -727,7 +727,7 @@ if m:
     proj_code_safe = m.group("short")
 else:
     proj_code = project.get("Project Code", "Project")
-    proj_code_safe = re.sub(r"[^\w]", "_", proj_code)   # "BRS CPALL (DCPS)" → "BRS_CPALL__DCPS_"
+    proj_code_safe = re.sub(r"[^\w]", "_", proj_code)   # "Swag Labs (Checkout)" → "Swag_Labs__Checkout_"
     proj_code_safe = re.sub(r"_+", "_", proj_code_safe).strip("_")  # collapse underscores
 
 prep_date_str = project.get("Prepared Date", "")

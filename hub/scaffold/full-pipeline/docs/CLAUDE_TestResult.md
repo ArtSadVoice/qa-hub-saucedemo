@@ -44,10 +44,10 @@ qa-test-result/
 
 | Field (Column B) | ค่า (Column C) | หมายเหตุ |
 |---|---|---|
-| Project Code | `BRS CPALL (DCPS)` | ตัวอย่าง |
-| Project Name | `BRS CPALL (DCPS)` | |
+| Project Code | `Swag Labs (Checkout)` | ตัวอย่าง |
+| Project Name | `Swag Labs (Checkout)` | |
 | Topic | `UAT Sign-Off` | |
-| Customer | `The BRS Company` | |
+| Customer | `Swag Labs` | |
 | Prepared By | ชื่อ QA | เซลล์สีเหลือง = ต้องกรอก |
 | Prepared Date | `DD MMM YYYY` | เช่น `23 Mar 2026` |
 | Sprint / Version | `Sprint 1` | |
@@ -227,7 +227,7 @@ Format: italic, 9pt, สีเทา `#595959`
 ```
 
 **ชื่อไฟล์ output:** `[ProjectCode]_TestResult_YYYYMMDD.docx`
-เช่น `BRS_CPALL_DCPS_TestResult_20260323.docx`
+เช่น `SwagLabs_Checkout_TestResult_20260323.docx`
 
 ---
 
@@ -278,13 +278,13 @@ python scripts/run.py
 
 **ตัวอย่าง output:**
 ```
-[12:34:56] Input: input/BRS CPALL (DCPS)__TestCase.xlsx
+[12:34:56] Input: input/Swag Labs (Checkout)__TestCase.xlsx
 [12:34:56] Changes since last run:
   TS_01: Pass 9→10  Not Start 1→0
   Total: Pass 38→39  Not Start 1→0
 
 Regenerating...
-✓ Saved: output/BRS_CPALL_DCPS_TestResult_20260325.docx
+✓ Saved: output/SwagLabs_Checkout_TestResult_20260325.docx
 [12:34:58] Done.
 ```
 
@@ -312,16 +312,16 @@ python3 scripts/watch.py 10
 
 **ตัวอย่าง output:**
 ```
-[12:34:56] Watching input/BRS CPALL (DCPS)__TestCase.xlsx (poll: 5s)
+[12:34:56] Watching input/Swag Labs (Checkout)__TestCase.xlsx (poll: 5s)
 [12:35:01] Change detected!
   TS_01: Pass 9→10  Not Start 1→0
   Total: Pass 38→39  Not Start 1→0
 Regenerating...
-Input  : input/BRS CPALL (DCPS)__TestCase.xlsx
+Input  : input/Swag Labs (Checkout)__TestCase.xlsx
 ...
-✓ Saved: output/BRS_CPALL_DCPS_TestResult_20260325.docx
+✓ Saved: output/SwagLabs_Checkout_TestResult_20260325.docx
 [12:35:03] Done.
-[12:35:03] Watching input/BRS CPALL (DCPS)__TestCase.xlsx (poll: 5s)
+[12:35:03] Watching input/Swag Labs (Checkout)__TestCase.xlsx (poll: 5s)
 ```
 
 **Edge cases ที่จัดการได้:**
