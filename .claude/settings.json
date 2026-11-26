@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "f180": {
+      "source": {
+        "source": "github",
+        "repo": "ArtSadVoice/feedback180-hub"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "f180-qa@f180": true
+  }
+}
